@@ -1,15 +1,10 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Users, Video, Award, Globe, Smartphone } from "lucide-react";
-import { LoginModal } from "@/components/auth/LoginModal";
-import { SignUpModal } from "@/components/auth/SignUpModal";
+import { BookOpen, Users, Video, Award, Globe, Smartphone, Calendar, Download } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Index = () => {
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignUp, setShowSignUp] = useState(false);
-
   const features = [
     {
       icon: <Video className="h-8 w-8 text-blue-600" />,
@@ -54,35 +49,75 @@ const Index = () => {
               <span className="text-2xl font-bold text-gray-900">TUTAGORA</span>
             </div>
             <div className="space-x-4">
-              <Button variant="outline" onClick={() => setShowLogin(true)}>
-                Login
-              </Button>
-              <Button onClick={() => setShowSignUp(true)}>
-                Get Started
-              </Button>
+              <Link to="/browse-tutors">
+                <Button variant="outline">Browse Tutors</Button>
+              </Link>
+              <Link to="/student-dashboard">
+                <Button>Student Dashboard</Button>
+              </Link>
+              <Link to="/tutor-dashboard">
+                <Button variant="outline">Tutor Dashboard</Button>
+              </Link>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section with Academic Image */}
       <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Leading EdTech in Africa
-            <span className="text-blue-600"> 2025-2035</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Empowering African students with live tutoring, offline learning, and AI-driven personalization. 
-            From K-12 to university, we're transforming education across the continent.
-          </p>
-          <div className="space-x-4">
-            <Button size="lg" onClick={() => setShowSignUp(true)}>
-              Start Learning Today
-            </Button>
-            <Button size="lg" variant="outline">
-              Become a Tutor
-            </Button>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-5xl font-bold text-gray-900 mb-6">
+                Leading EdTech in Africa
+                <span className="text-blue-600"> 2025-2035</span>
+              </h1>
+              <p className="text-xl text-gray-600 mb-8">
+                Empowering African students with live tutoring, offline learning, and AI-driven personalization. 
+                From K-12 to university, we're transforming education across the continent.
+              </p>
+              <div className="space-x-4">
+                <Link to="/student-dashboard">
+                  <Button size="lg">Start Learning Today</Button>
+                </Link>
+                <Link to="/tutor-dashboard">
+                  <Button size="lg" variant="outline">Become a Tutor</Button>
+                </Link>
+              </div>
+              
+              {/* Quick Access Cards */}
+              <div className="grid grid-cols-2 gap-4 mt-8">
+                <Link to="/browse-tutors">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardContent className="p-4 text-center">
+                      <Users className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+                      <p className="font-semibold">Browse Tutors</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+                <Link to="/course-dashboard">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardContent className="p-4 text-center">
+                      <BookOpen className="h-6 w-6 mx-auto mb-2 text-orange-500" />
+                      <p className="font-semibold">View Courses</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </div>
+            </div>
+            
+            {/* Academic Image */}
+            <div className="relative">
+              <img 
+                src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?q=80&w=1000&auto=format&fit=crop"
+                alt="Students learning with laptops" 
+                className="rounded-lg shadow-2xl w-full h-96 object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent rounded-lg"></div>
+              <div className="absolute bottom-4 left-4 text-white">
+                <p className="text-sm font-medium">Empowering African Education</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -111,6 +146,54 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Demo Features Section */}
+      <section className="py-16 px-4 bg-gray-50">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-12">
+            Experience TUTAGORA Features
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Link to="/live-tutoring/demo-session">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="p-6 text-center">
+                  <Video className="h-8 w-8 mx-auto mb-4 text-blue-600" />
+                  <h3 className="font-semibold mb-2">Try Live Tutoring</h3>
+                  <p className="text-sm text-gray-600">Join a demo session</p>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Link to="/browse-tutors">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="p-6 text-center">
+                  <Calendar className="h-8 w-8 mx-auto mb-4 text-orange-500" />
+                  <h3 className="font-semibold mb-2">Book a Tutor</h3>
+                  <p className="text-sm text-gray-600">Schedule sessions</p>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Link to="/course-dashboard">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="p-6 text-center">
+                  <Award className="h-8 w-8 mx-auto mb-4 text-blue-600" />
+                  <h3 className="font-semibold mb-2">Exam Prep</h3>
+                  <p className="text-sm text-gray-600">KCSE, JAMB & more</p>
+                </CardContent>
+              </Card>
+            </Link>
+            
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <Download className="h-8 w-8 mx-auto mb-4 text-orange-500" />
+                <h3 className="font-semibold mb-2">Offline Content</h3>
+                <p className="text-sm text-gray-600">Download lessons</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Stats Section */}
       <section className="py-16 px-4 bg-gradient-to-r from-blue-600 to-blue-800">
         <div className="max-w-7xl mx-auto">
@@ -128,21 +211,6 @@ const Index = () => {
               <div className="text-blue-200">African Countries</div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">
-            Ready to Transform Your Education?
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Join thousands of African students already learning with TUTAGORA
-          </p>
-          <Button size="lg" onClick={() => setShowSignUp(true)}>
-            Start Your Journey Today
-          </Button>
         </div>
       </section>
 
@@ -192,10 +260,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-
-      {/* Modals */}
-      <LoginModal open={showLogin} onOpenChange={setShowLogin} />
-      <SignUpModal open={showSignUp} onOpenChange={setShowSignUp} />
     </div>
   );
 };
