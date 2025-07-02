@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { BookOpen } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface SignUpModalProps {
   open: boolean;
@@ -22,12 +24,42 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
     phone: "",
     country: ""
   });
+  const [loading, setLoading] = useState(false);
+  const { signUp } = useAuth();
 
-  const handleSignUp = () => {
-    // Mock signup logic - in real app, this would create account via backend
-    console.log("Signup attempt:", formData);
-    // For now, just close the modal
-    onOpenChange(false);
+  const handleSignUp = async () => {
+    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signUp(formData.email, formData.password, {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        user_type: formData.userType,
+        phone: formData.phone,
+        country: formData.country,
+      });
+      toast.success("Account created successfully! Please check your email to verify your account.");
+      onOpenChange(false);
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        userType: "student",
+        phone: "",
+        country: ""
+      });
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      toast.error(error.message || "Failed to create account");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateFormData = (field: string, value: string) => {
@@ -68,7 +100,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">First Name *</Label>
                 <Input
                   id="firstName"
                   placeholder="John"
@@ -77,7 +109,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">Last Name *</Label>
                 <Input
                   id="lastName"
                   placeholder="Doe"
@@ -88,7 +120,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 type="email"
@@ -119,7 +151,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password *</Label>
               <Input
                 id="password"
                 type="password"
@@ -129,8 +161,12 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
               />
             </div>
 
-            <Button className="w-full" onClick={handleSignUp}>
-              Create Account
+            <Button 
+              className="w-full" 
+              onClick={handleSignUp}
+              disabled={loading}
+            >
+              {loading ? "Creating Account..." : "Create Account"}
             </Button>
 
             <p className="text-xs text-gray-600 text-center">

@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { BookOpen } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface LoginModalProps {
   open: boolean;
@@ -16,12 +18,28 @@ export const LoginModal = ({ open, onOpenChange }: LoginModalProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [userType, setUserType] = useState<"student" | "tutor" | "admin" | "parent">("student");
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
 
-  const handleLogin = () => {
-    // Mock login logic - in real app, this would authenticate with backend
-    console.log("Login attempt:", { email, userType });
-    // For now, just close the modal
-    onOpenChange(false);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signIn(email, password);
+      toast.success("Successfully logged in!");
+      onOpenChange(false);
+      setEmail("");
+      setPassword("");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error.message || "Failed to log in");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,8 +96,12 @@ export const LoginModal = ({ open, onOpenChange }: LoginModalProps) => {
               />
             </div>
 
-            <Button className="w-full" onClick={handleLogin}>
-              Sign In
+            <Button 
+              className="w-full" 
+              onClick={handleLogin}
+              disabled={loading}
+            >
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
 
             <div className="text-center space-y-2">
