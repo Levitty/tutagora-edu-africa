@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Award, Star, Download, Clock, Users, CheckCircle, Target, Trophy, Certificate } from "lucide-react";
+import { BookOpen, Award, Star, Download, Clock, Users, CheckCircle, Target, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Certification = () => {
@@ -298,7 +297,7 @@ const Certification = () => {
                           <CardDescription>Credential ID: {cert.credentialId}</CardDescription>
                         </div>
                       </div>
-                      <Certificate className="h-8 w-8 text-yellow-600" />
+                      <Award className="h-8 w-8 text-yellow-600" />
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
