@@ -11,6 +11,9 @@ import TutorDashboard from "./pages/TutorDashboard";
 import CourseDashboard from "./pages/CourseDashboard";
 import TutorBrowsing from "./pages/TutorBrowsing";
 import LiveTutoring from "./pages/LiveTutoring";
+import AILearning from "./pages/AILearning";
+import TutorAvailability from "./pages/TutorAvailability";
+import Certification from "./pages/Certification";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +30,9 @@ const App = () => (
           <Route path="/course-dashboard" element={<CourseDashboard />} />
           <Route path="/browse-tutors" element={<TutorBrowsing />} />
           <Route path="/live-tutoring/:sessionId" element={<LiveTutoring />} />
+          <Route path="/ai-learning" element={<AILearning />} />
+          <Route path="/tutor-availability" element={<TutorAvailability />} />
+          <Route path="/certification" element={<Certification />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
