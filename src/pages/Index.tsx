@@ -2,11 +2,13 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
-import { BookOpen, LogOut } from "lucide-react";
+import { BookOpen, LogOut, User, GraduationCap, Users } from "lucide-react";
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
+  const { data: profile } = useProfile();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +26,13 @@ const Index = () => {
     }
   };
 
+  const getDashboardRoute = () => {
+    if (profile?.user_type === 'tutor') {
+      return "/tutor-dashboard";
+    }
+    return "/student-dashboard";
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -36,7 +45,7 @@ const Index = () => {
   }
 
   if (!user) {
-    return null; // Will redirect to auth
+    return null;
   }
 
   return (
@@ -50,7 +59,7 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
-              Welcome, {user.email}
+              Welcome, {profile?.first_name || user.email}
             </span>
             <Button 
               variant="outline" 
@@ -70,34 +79,49 @@ const Index = () => {
             Welcome to Your Learning Journey
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Discover personalized tutoring and AI-powered learning experiences
+            {profile?.user_type === 'tutor' 
+              ? "Share your knowledge and inspire students worldwide"
+              : "Discover personalized tutoring and AI-powered learning experiences"
+            }
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
             <Button 
               size="lg" 
               className="h-32 flex flex-col items-center justify-center"
-              onClick={() => navigate("/student-dashboard")}
+              onClick={() => navigate(getDashboardRoute())}
+            >
+              <User className="h-8 w-8 mb-2" />
+              My Dashboard
+            </Button>
+
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="h-32 flex flex-col items-center justify-center"
+              onClick={() => navigate("/course-dashboard")}
             >
               <BookOpen className="h-8 w-8 mb-2" />
-              Student Dashboard
+              Browse Courses
             </Button>
+
             <Button 
               size="lg" 
               variant="outline"
               className="h-32 flex flex-col items-center justify-center"
               onClick={() => navigate("/browse-tutors")}
             >
-              <BookOpen className="h-8 w-8 mb-2" />
-              Browse Tutors
+              <Users className="h-8 w-8 mb-2" />
+              Find Tutors
             </Button>
+
             <Button 
               size="lg" 
               variant="outline"
               className="h-32 flex flex-col items-center justify-center"
               onClick={() => navigate("/ai-learning")}
             >
-              <BookOpen className="h-8 w-8 mb-2" />
+              <GraduationCap className="h-8 w-8 mb-2" />
               AI Learning
             </Button>
           </div>

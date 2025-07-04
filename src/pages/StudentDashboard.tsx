@@ -4,20 +4,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Calendar, Clock, Video, Award, User, Download, Play } from "lucide-react";
+import { BookOpen, Calendar, Clock, Video, Award, User, Download, Play, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
+import AILearningGame from "@/components/ai/AILearningGame";
+import { useCourses } from "@/hooks/useCourses";
+import { useProfile } from "@/hooks/useProfile";
 
 const StudentDashboard = () => {
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const { data: courses = [] } = useCourses();
+  const { data: profile } = useProfile();
+
+  // Mock data for demonstration
   const upcomingClasses = [
     { id: 1, subject: "Mathematics", tutor: "Dr. Amina Ochieng", time: "2:00 PM", date: "Today", sessionId: "math-101" },
     { id: 2, subject: "Physics", tutor: "Prof. Kwame Asante", time: "4:00 PM", date: "Tomorrow", sessionId: "physics-201" },
     { id: 3, subject: "Chemistry", tutor: "Dr. Fatima Ibrahim", time: "10:00 AM", date: "Wednesday", sessionId: "chem-301" }
-  ];
-
-  const courses = [
-    { id: 1, title: "KCSE Mathematics Prep", progress: 75, lessons: 24, completed: 18, downloadable: true },
-    { id: 2, title: "Physics for JAMB", progress: 45, lessons: 32, completed: 14, downloadable: true },
-    { id: 3, title: "Web Development", progress: 90, lessons: 20, completed: 18, downloadable: false }
   ];
 
   const recentScores = [
@@ -26,17 +28,27 @@ const StudentDashboard = () => {
     { subject: "Chemistry", score: 92, date: "Nov 15" }
   ];
 
-  const downloadableContent = [
-    { id: 1, title: "KCSE Math Formula Sheet", size: "2.5 MB", type: "PDF" },
-    { id: 2, title: "Physics Lab Experiments", size: "15 MB", type: "Video" },
-    { id: 3, title: "Chemistry Periodic Table", size: "1.2 MB", type: "PDF" }
-  ];
+  const subjects = ["Mathematics", "Physics", "Chemistry", "Biology", "English"];
 
-  const handleDownload = (contentId: number) => {
-    // Mock download functionality
-    console.log(`Downloading content ${contentId}`);
-    // In real app, this would trigger actual download
-  };
+  if (selectedSubject) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <Button
+              variant="outline"
+              onClick={() => setSelectedSubject(null)}
+              className="mb-4"
+            >
+              ← Back to Dashboard
+            </Button>
+            <h1 className="text-2xl font-bold">AI Learning - {selectedSubject}</h1>
+          </div>
+          <AILearningGame subject={selectedSubject} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -49,7 +61,9 @@ const StudentDashboard = () => {
                 <BookOpen className="h-8 w-8 text-blue-600" />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Welcome back, John!</h1>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Welcome back, {profile?.first_name || 'Student'}!
+                </h1>
                 <p className="text-gray-600">Ready to continue learning?</p>
               </div>
             </div>
@@ -75,10 +89,10 @@ const StudentDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Courses</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Enrolled Courses</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">12</div>
+              <div className="text-2xl font-bold text-blue-600">{courses.length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -110,6 +124,34 @@ const StudentDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* AI Learning Games */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Brain className="h-5 w-5 mr-2" />
+                  AI Learning Games
+                </CardTitle>
+                <CardDescription>
+                  Practice with AI-powered interactive games
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {subjects.map((subject) => (
+                    <Button
+                      key={subject}
+                      variant="outline"
+                      className="h-20 flex flex-col items-center justify-center"
+                      onClick={() => setSelectedSubject(subject)}
+                    >
+                      <Brain className="h-6 w-6 mb-1" />
+                      <span className="text-sm">{subject}</span>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Upcoming Classes */}
             <Card>
               <CardHeader>
@@ -140,68 +182,35 @@ const StudentDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Course Progress */}
+            {/* Available Courses */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <BookOpen className="h-5 w-5 mr-2" />
-                  Course Progress
+                  Available Courses
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {courses.map((course) => (
-                  <div key={course.id} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-semibold">{course.title}</h3>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-600">
-                          {course.completed}/{course.lessons} lessons
-                        </span>
-                        {course.downloadable && (
-                          <Button variant="outline" size="sm" onClick={() => handleDownload(course.id)}>
-                            <Download className="h-4 w-4 mr-1" />
-                            Download
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    <Progress value={course.progress} className="h-2" />
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">{course.progress}% complete</span>
-                      <Button variant="outline" size="sm">
-                        <Play className="h-4 w-4 mr-1" />
-                        Continue
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Offline Content */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Download className="h-5 w-5 mr-2" />
-                  Offline Content
-                </CardTitle>
-                <CardDescription>
-                  Download content for offline study (works without internet)
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {downloadableContent.map((content) => (
-                  <div key={content.id} className="flex items-center justify-between p-3 border rounded-lg">
+                {courses.slice(0, 3).map((course) => (
+                  <div key={course.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
-                      <h4 className="font-semibold">{content.title}</h4>
-                      <p className="text-sm text-gray-600">{content.type} • {content.size}</p>
+                      <h3 className="font-semibold">{course.title}</h3>
+                      <p className="text-gray-600 text-sm">{course.subject} • {course.level}</p>
+                      <p className="text-green-600 font-medium">
+                        {course.price ? `KSh ${course.price}` : 'Free'}
+                      </p>
                     </div>
-                    <Button size="sm" onClick={() => handleDownload(content.id)}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
+                    <Button size="sm">
+                      <Play className="h-4 w-4 mr-2" />
+                      Enroll
                     </Button>
                   </div>
                 ))}
+                <Link to="/course-dashboard">
+                  <Button variant="outline" className="w-full">
+                    View All Courses
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -261,7 +270,7 @@ const StudentDashboard = () => {
                 <Link to="/browse-tutors">
                   <Button variant="outline" className="w-full justify-start">
                     <Calendar className="h-4 w-4 mr-2" />
-                    Schedule Class
+                    Find Tutors
                   </Button>
                 </Link>
                 <Button variant="outline" className="w-full justify-start">

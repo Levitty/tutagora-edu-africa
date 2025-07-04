@@ -9,34 +9,289 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_learning_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          difficulty_level: string | null
+          id: string
+          score: number | null
+          session_data: Json | null
+          student_id: string
+          subject: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          difficulty_level?: string | null
+          id?: string
+          score?: number | null
+          session_data?: Json | null
+          student_id: string
+          subject: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          difficulty_level?: string | null
+          id?: string
+          score?: number | null
+          session_data?: Json | null
+          student_id?: string
+          subject?: string
+        }
+        Relationships: []
+      }
+      courses: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_weeks: number | null
+          id: string
+          is_published: boolean | null
+          level: string | null
+          price: number | null
+          subject: string
+          thumbnail_url: string | null
+          title: string
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_weeks?: number | null
+          id?: string
+          is_published?: boolean | null
+          level?: string | null
+          price?: number | null
+          subject: string
+          thumbnail_url?: string | null
+          title: string
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_weeks?: number | null
+          id?: string
+          is_published?: boolean | null
+          level?: string | null
+          price?: number | null
+          subject?: string
+          thumbnail_url?: string | null
+          title?: string
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      enrollments: {
+        Row: {
+          completed_at: string | null
+          course_id: string
+          enrolled_at: string
+          id: string
+          progress: number | null
+          student_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id: string
+          enrolled_at?: string
+          id?: string
+          progress?: number | null
+          student_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string
+          enrolled_at?: string
+          id?: string
+          progress?: number | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kyc_documents: {
+        Row: {
+          document_type: string
+          document_url: string
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          status: string | null
+          submitted_at: string
+          tutor_id: string
+        }
+        Insert: {
+          document_type: string
+          document_url: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          status?: string | null
+          submitted_at?: string
+          tutor_id: string
+        }
+        Update: {
+          document_type?: string
+          document_url?: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          status?: string | null
+          submitted_at?: string
+          tutor_id?: string
+        }
+        Relationships: []
+      }
+      lessons: {
+        Row: {
+          content: string | null
+          course_id: string
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          course_id: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          order_index: number
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          course_id?: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_sessions: {
+        Row: {
+          bbb_attendee_password: string | null
+          bbb_meeting_id: string | null
+          bbb_moderator_password: string | null
+          course_id: string | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          scheduled_at: string
+          status: string | null
+          title: string
+          tutor_id: string
+        }
+        Insert: {
+          bbb_attendee_password?: string | null
+          bbb_meeting_id?: string | null
+          bbb_moderator_password?: string | null
+          course_id?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          scheduled_at: string
+          status?: string | null
+          title: string
+          tutor_id: string
+        }
+        Update: {
+          bbb_attendee_password?: string | null
+          bbb_meeting_id?: string | null
+          bbb_moderator_password?: string | null
+          course_id?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          scheduled_at?: string
+          status?: string | null
+          title?: string
+          tutor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_sessions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          bio: string | null
           country: string | null
           created_at: string
+          expertise: string[] | null
           first_name: string | null
+          hourly_rate: number | null
           id: string
+          kyc_status: string | null
           last_name: string | null
           phone: string | null
+          profile_photo_url: string | null
           updated_at: string
           user_type: string | null
         }
         Insert: {
+          bio?: string | null
           country?: string | null
           created_at?: string
+          expertise?: string[] | null
           first_name?: string | null
+          hourly_rate?: number | null
           id: string
+          kyc_status?: string | null
           last_name?: string | null
           phone?: string | null
+          profile_photo_url?: string | null
           updated_at?: string
           user_type?: string | null
         }
         Update: {
+          bio?: string | null
           country?: string | null
           created_at?: string
+          expertise?: string[] | null
           first_name?: string | null
+          hourly_rate?: number | null
           id?: string
+          kyc_status?: string | null
           last_name?: string | null
           phone?: string | null
+          profile_photo_url?: string | null
           updated_at?: string
           user_type?: string | null
         }
