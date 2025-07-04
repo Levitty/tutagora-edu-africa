@@ -34,6 +34,7 @@ export const LoginModal = ({ open, onOpenChange }: LoginModalProps) => {
       onOpenChange(false);
       setEmail("");
       setPassword("");
+      // Navigation will be handled by the auth state change
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Failed to log in");
