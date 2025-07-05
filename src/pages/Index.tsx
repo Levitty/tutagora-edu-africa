@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
-import { BookOpen, LogOut, User, GraduationCap, Users, Star, ArrowRight, Play, CheckCircle, Globe, Award } from "lucide-react";
+import { BookOpen, LogOut, User, GraduationCap, Users, Star, ArrowRight, Play, CheckCircle, Globe, Award, TrendingUp, Briefcase, Target, Zap, Shield, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
@@ -37,291 +37,343 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header */}
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <BookOpen className="h-8 w-8 text-blue-600 mr-2" />
-            <h1 className="text-2xl font-bold text-gray-900">TUTAGORA</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            {loading ? (
-              <div className="animate-pulse flex space-x-2">
-                <div className="h-8 w-16 bg-gray-200 rounded"></div>
-                <div className="h-8 w-20 bg-gray-200 rounded"></div>
+      <div className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl mr-3">
+                <BookOpen className="h-6 w-6 text-white" />
               </div>
-            ) : user ? (
-              <>
-                <span className="text-sm text-gray-600">
-                  Welcome, {profile?.first_name || user.email}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate(getDashboardRoute())}
-                  className="flex items-center gap-2"
-                >
-                  <User className="h-4 w-4" />
-                  My Dashboard
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleSignOut}
-                  className="flex items-center gap-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate("/auth")}
-                >
-                  Sign In
-                </Button>
-                <Button 
-                  size="sm" 
-                  onClick={() => navigate("/auth")}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Get Started
-                </Button>
-              </>
-            )}
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  TUTAGORA
+                </h1>
+                <p className="text-xs text-gray-500">Africa's Learning Platform</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              {loading ? (
+                <div className="animate-pulse flex space-x-2">
+                  <div className="h-8 w-16 bg-gray-200 rounded"></div>
+                  <div className="h-8 w-20 bg-gray-200 rounded"></div>
+                </div>
+              ) : user ? (
+                <>
+                  <span className="text-sm text-gray-600 hidden md:block">
+                    Welcome, {profile?.first_name || user.email}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => navigate(getDashboardRoute())}
+                    className="flex items-center gap-2"
+                  >
+                    <User className="h-4 w-4" />
+                    Dashboard
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate("/auth")}
+                    className="hidden md:flex"
+                  >
+                    Sign In
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={() => navigate("/auth")}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    Get Started
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-gray-900 mb-6">
-            Africa's Premier Learning Platform
+        <div className="text-center mb-20">
+          <div className="inline-flex items-center bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <Zap className="h-4 w-4 mr-2" />
+            Transform Your Career with AI-Powered Learning
+          </div>
+          <h2 className="text-6xl md:text-7xl font-bold text-gray-900 mb-8 leading-tight">
+            Master Skills,
+            <br />
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Shape Africa's Future
+            </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Connect with expert tutors across Africa, master subjects with AI-powered adaptive learning games, 
-            and transform your educational journey with personalized, interactive experiences.
+          <p className="text-xl text-gray-600 max-w-4xl mx-auto mb-12 leading-relaxed">
+            Join Africa's most innovative learning ecosystem. Connect with world-class tutors, 
+            master in-demand skills through AI-powered games, and accelerate your career in the 
+            global job market. From coding to critical thinking - we've got you covered.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          
+          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <Button 
               size="lg" 
               onClick={() => navigate("/browse-tutors")}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-4 h-auto"
             >
               <Users className="h-5 w-5" />
-              Explore Tutors
-              <ArrowRight className="h-4 w-4" />
+              Find Expert Tutors
+              <ArrowRight className="h-5 w-5" />
             </Button>
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => handleAuthenticatedAction("/ai-learning")}
-              className="flex items-center gap-2 border-blue-600 text-blue-600 hover:bg-blue-50"
+              onClick={() => navigate("/student-dashboard")}
+              className="flex items-center gap-3 border-2 border-purple-200 text-purple-700 hover:bg-purple-50 text-lg px-8 py-4 h-auto"
             >
               <GraduationCap className="h-5 w-5" />
-              Try AI Learning
-              <Play className="h-4 w-4" />
+              Explore Learning Path
+              <Play className="h-5 w-5" />
             </Button>
           </div>
 
-          {/* Demo Video or Interactive Preview */}
-          <div className="bg-white rounded-2xl p-8 shadow-lg mb-16">
-            <div className="aspect-video bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <div className="text-center text-white">
-                <Play className="h-16 w-16 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold mb-2">See TUTAGORA in Action</h3>
-                <p className="text-blue-100">Interactive learning experience awaits</p>
-              </div>
+          {/* Hero Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-2">1,000+</div>
+              <div className="text-gray-600 text-sm">Expert Tutors</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600 mb-2">25K+</div>
+              <div className="text-gray-600 text-sm">Success Stories</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600 mb-2">54</div>
+              <div className="text-gray-600 text-sm">Countries</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-orange-600 mb-2">98%</div>
+              <div className="text-gray-600 text-sm">Job Success Rate</div>
             </div>
           </div>
         </div>
 
         {/* Key Features Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <Card className="text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
-            <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-blue-600" />
-              </div>
-              <CardTitle className="text-xl">Expert African Tutors</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Connect with qualified, vetted tutors from across Africa for personalized one-on-one sessions tailored to your learning goals.
-              </p>
-              <Button variant="outline" onClick={() => navigate("/browse-tutors")} className="w-full">
-                Browse Tutors
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="mb-20">
+          <div className="text-center mb-16">
+            <h3 className="text-4xl font-bold text-gray-900 mb-4">
+              Why Choose TUTAGORA?
+            </h3>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              We combine human expertise with AI innovation to deliver personalized learning experiences that drive real career outcomes.
+            </p>
+          </div>
 
-          <Card className="text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
-            <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <GraduationCap className="h-8 w-8 text-green-600" />
-              </div>
-              <CardTitle className="text-xl">AI Adaptive Learning</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Engage with intelligent games that adapt to your learning pace, style, and progress across multiple subjects and difficulty levels.
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="group hover:shadow-2xl transition-all duration-500 hover:scale-105 border-0 bg-gradient-to-br from-blue-50 to-blue-100">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Users className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl mb-2">World-Class African Tutors</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Learn from verified experts across Africa. Our tutors are industry professionals and academic leaders ready to accelerate your growth.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/browse-tutors")} 
+                  className="w-full group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                >
+                  Browse Tutors
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-2xl transition-all duration-500 hover:scale-105 border-0 bg-gradient-to-br from-green-50 to-emerald-100">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <GraduationCap className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl mb-2">AI-Powered Adaptive Learning</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Experience personalized learning that adapts to your pace and style. Our AI games make complex subjects engaging and memorable.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/student-dashboard")}
+                  className="w-full group-hover:bg-green-600 group-hover:text-white transition-colors"
+                >
+                  Try AI Learning
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-2xl transition-all duration-500 hover:scale-105 border-0 bg-gradient-to-br from-purple-50 to-purple-100">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Briefcase className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl mb-2">Career-Focused Upskilling</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Master in-demand skills for today's job market. From coding to critical thinking, we prepare you for global opportunities.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/course-dashboard")}
+                  className="w-full group-hover:bg-purple-600 group-hover:text-white transition-colors"
+                >
+                  Explore Careers
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Upskilling Section */}
+        <div className="bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-900 rounded-3xl shadow-2xl p-12 mb-20 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm"></div>
+          <div className="relative z-10">
+            <div className="text-center mb-12">
+              <h3 className="text-4xl font-bold mb-4">
+                Future-Proof Your Career
+              </h3>
+              <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+                The job market is evolving rapidly. Stay ahead with skills that matter in the digital economy.
               </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              <div className="text-center">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300">
+                  <TrendingUp className="h-12 w-12 text-blue-300 mx-auto mb-4" />
+                  <h4 className="text-xl font-semibold mb-2">High-Demand Skills</h4>
+                  <p className="text-blue-100">AI, Data Science, Cloud Computing, Digital Marketing</p>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300">
+                  <Target className="h-12 w-12 text-green-300 mx-auto mb-4" />
+                  <h4 className="text-xl font-semibold mb-2">Industry Certifications</h4>
+                  <p className="text-blue-100">Google, Microsoft, AWS, Meta recognized programs</p>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300">
+                  <Briefcase className="h-12 w-12 text-purple-300 mx-auto mb-4" />
+                  <h4 className="text-xl font-semibold mb-2">Career Placement</h4>
+                  <p className="text-blue-100">Direct connections to top employers across Africa</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
               <Button 
-                variant="outline" 
-                onClick={() => handleAuthenticatedAction("/ai-learning")}
-                className="w-full"
+                size="lg" 
+                onClick={() => navigate("/course-dashboard")}
+                className="bg-white text-purple-900 hover:bg-gray-100 text-lg px-8 py-4 h-auto font-semibold"
               >
-                Start Learning
+                Start Your Upskilling Journey
               </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
-            <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                <BookOpen className="h-8 w-8 text-purple-600" />
-              </div>
-              <CardTitle className="text-xl">Comprehensive Courses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Access expertly designed courses covering primary, secondary, and university-level subjects with interactive content.
-              </p>
-              <Button variant="outline" onClick={() => navigate("/course-dashboard")} className="w-full">
-                Explore Courses
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Why Choose TUTAGORA Section */}
-        <div className="bg-white rounded-2xl p-12 mb-16 shadow-lg">
-          <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Why Choose TUTAGORA?
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0">
-                <Globe className="h-8 w-8 text-blue-600" />
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold mb-2">Pan-African Network</h4>
-                <p className="text-gray-600">Connect with educators and learners across the entire African continent.</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0">
-                <Award className="h-8 w-8 text-green-600" />
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold mb-2">Verified Tutors</h4>
-                <p className="text-gray-600">All tutors undergo thorough KYC verification and qualification checks.</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0">
-                <CheckCircle className="h-8 w-8 text-purple-600" />
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold mb-2">Proven Results</h4>
-                <p className="text-gray-600">Track your progress with detailed analytics and achievement systems.</p>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Success Stats */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg p-8 mb-16 text-white">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold mb-2">1,000+</div>
-              <div className="text-blue-100">Expert Tutors</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">25,000+</div>
-              <div className="text-blue-100">Students Served</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">54</div>
-              <div className="text-blue-100">African Countries</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-2">98%</div>
-              <div className="text-blue-100">Success Rate</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Student Testimonials */}
-        <div className="text-center mb-16">
-          <h3 className="text-3xl font-bold text-gray-900 mb-8">Success Stories from Across Africa</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
+        {/* Success Stories */}
+        <div className="text-center mb-20">
+          <h3 className="text-4xl font-bold text-gray-900 mb-8">Success Stories from Across Africa</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="hover:shadow-xl transition-shadow border-0 bg-gradient-to-br from-yellow-50 to-orange-50">
+              <CardContent className="p-8">
+                <div className="flex items-center mb-6 justify-center">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-600 mb-4">
-                  "The AI learning games made chemistry so engaging! I improved my WAEC grades from C to A1."
+                <p className="text-gray-700 mb-6 text-lg italic leading-relaxed">
+                  "TUTAGORA's AI learning helped me land a software engineering role at a top tech company. The adaptive games made coding concepts so clear!"
                 </p>
-                <div className="text-sm text-gray-500">- Amina K., Lagos, Nigeria</div>
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">Amina K.</div>
+                  <div className="text-sm text-gray-600">Software Engineer, Lagos</div>
+                </div>
               </CardContent>
             </Card>
             
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
+            <Card className="hover:shadow-xl transition-shadow border-0 bg-gradient-to-br from-blue-50 to-cyan-50">
+              <CardContent className="p-8">
+                <div className="flex items-center mb-6 justify-center">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-600 mb-4">
-                  "Found an amazing physics tutor who helped me excel in my A-levels. Now studying engineering!"
+                <p className="text-gray-700 mb-6 text-lg italic leading-relaxed">
+                  "From struggling with physics to getting into engineering university - my tutor transformed my understanding completely!"
                 </p>
-                <div className="text-sm text-gray-500">- Joseph M., Nairobi, Kenya</div>
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">Joseph M.</div>
+                  <div className="text-sm text-gray-600">Engineering Student, Nairobi</div>
+                </div>
               </CardContent>
             </Card>
             
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
+            <Card className="hover:shadow-xl transition-shadow border-0 bg-gradient-to-br from-green-50 to-emerald-50">
+              <CardContent className="p-8">
+                <div className="flex items-center mb-6 justify-center">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-600 mb-4">
-                  "As a tutor, TUTAGORA connected me with amazing students. I love the teaching tools!"
+                <p className="text-gray-700 mb-6 text-lg italic leading-relaxed">
+                  "Teaching on TUTAGORA allowed me to reach students across Africa and grow my impact beyond the classroom!"
                 </p>
-                <div className="text-sm text-gray-500">- Dr. Sarah O., Cape Town, South Africa</div>
+                <div className="text-center">
+                  <div className="font-semibold text-gray-900">Dr. Sarah O.</div>
+                  <div className="text-sm text-gray-600">Mathematics Tutor, Cape Town</div>
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
         {/* Subject Areas */}
-        <div className="bg-white rounded-2xl p-12 mb-16 shadow-lg">
-          <h3 className="text-3xl font-bold text-center text-gray-900 mb-8">
+        <div className="bg-white rounded-3xl p-12 mb-20 shadow-xl">
+          <h3 className="text-4xl font-bold text-center text-gray-900 mb-8">
             Master Any Subject
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 text-center">
             {[
-              { name: "Mathematics", icon: "📐" },
-              { name: "Physics", icon: "⚡" },
-              { name: "Chemistry", icon: "🧪" },
-              { name: "Biology", icon: "🔬" },
-              { name: "English", icon: "📚" },
-              { name: "History", icon: "🏛️" }
+              { name: "Mathematics", icon: "📐", color: "from-blue-500 to-blue-600" },
+              { name: "Physics", icon: "⚡", color: "from-purple-500 to-purple-600" },
+              { name: "Chemistry", icon: "🧪", color: "from-green-500 to-green-600" },
+              { name: "Biology", icon: "🔬", color: "from-red-500 to-red-600" },
+              { name: "English", icon: "📚", color: "from-yellow-500 to-yellow-600" },
+              { name: "Programming", icon: "💻", color: "from-indigo-500 to-indigo-600" }
             ].map((subject) => (
-              <div key={subject.name} className="p-4 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="text-4xl mb-2">{subject.icon}</div>
-                <div className="font-medium text-gray-900">{subject.name}</div>
+              <div key={subject.name} className="group cursor-pointer">
+                <div className={`bg-gradient-to-r ${subject.color} p-6 rounded-2xl hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-xl mb-4`}>
+                  <div className="text-4xl mb-2">{subject.icon}</div>
+                </div>
+                <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {subject.name}
+                </div>
               </div>
             ))}
           </div>
@@ -329,29 +381,32 @@ const Index = () => {
 
         {/* Final CTA Section */}
         <div className="text-center">
-          <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white overflow-hidden">
-            <CardContent className="py-16 px-8">
-              <h3 className="text-4xl font-bold mb-4">Ready to Transform Your Learning?</h3>
-              <p className="text-blue-100 mb-8 max-w-2xl mx-auto text-lg">
-                Join thousands of students and tutors who are already part of Africa's fastest-growing educational community.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  size="lg" 
-                  variant="secondary"
-                  onClick={() => navigate("/auth")}
-                  className="text-lg px-8 py-3"
-                >
-                  Start Learning Today
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="text-white border-white hover:bg-white hover:text-blue-600 text-lg px-8 py-3"
-                  onClick={() => navigate("/browse-tutors")}
-                >
-                  Browse Tutors
-                </Button>
+          <Card className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white overflow-hidden border-0 shadow-2xl">
+            <CardContent className="py-20 px-8 relative">
+              <div className="absolute inset-0 bg-black/10"></div>
+              <div className="relative z-10">
+                <h3 className="text-5xl font-bold mb-6">Ready to Transform Your Future?</h3>
+                <p className="text-blue-100 mb-10 max-w-3xl mx-auto text-xl leading-relaxed">
+                  Join thousands of learners who are already building the skills that matter. 
+                  Your journey to career success starts here.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                  <Button 
+                    size="lg" 
+                    onClick={() => navigate("/auth")}
+                    className="bg-white text-purple-900 hover:bg-gray-100 text-xl px-10 py-5 h-auto font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    Start Learning Today
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="text-white border-2 border-white hover:bg-white hover:text-purple-600 text-xl px-10 py-5 h-auto font-semibold"
+                    onClick={() => navigate("/browse-tutors")}
+                  >
+                    Browse Tutors
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -359,44 +414,46 @@ const Index = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900 text-white py-16 mt-20">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div>
-              <div className="flex items-center mb-4">
-                <BookOpen className="h-6 w-6 text-blue-400 mr-2" />
-                <span className="text-xl font-bold">TUTAGORA</span>
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl mr-3">
+                  <BookOpen className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-2xl font-bold">TUTAGORA</span>
               </div>
-              <p className="text-gray-400">
-                Empowering education across Africa through technology and human connection.
+              <p className="text-gray-400 leading-relaxed">
+                Empowering Africa's future through innovative education and career-focused learning.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">For Students</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="/browse-tutors" className="hover:text-white">Find Tutors</a></li>
-                <li><a href="#" onClick={() => handleAuthenticatedAction("/ai-learning")} className="hover:text-white">AI Learning</a></li>
-                <li><a href="/course-dashboard" className="hover:text-white">Courses</a></li>
+              <h4 className="font-semibold mb-6 text-lg">For Students</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li><button onClick={() => navigate("/browse-tutors")} className="hover:text-white transition-colors">Find Tutors</button></li>
+                <li><button onClick={() => navigate("/student-dashboard")} className="hover:text-white transition-colors">AI Learning</button></li>
+                <li><button onClick={() => navigate("/course-dashboard")} className="hover:text-white transition-colors">Courses</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">For Tutors</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="/auth" className="hover:text-white">Become a Tutor</a></li>
-                <li><a href="#" onClick={() => handleAuthenticatedAction("/tutor-dashboard")} className="hover:text-white">Tutor Dashboard</a></li>
+              <h4 className="font-semibold mb-6 text-lg">For Tutors</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li><button onClick={() => navigate("/auth")} className="hover:text-white transition-colors">Become a Tutor</button></li>
+                <li><button onClick={() => navigate("/tutor-dashboard")} className="hover:text-white transition-colors">Tutor Dashboard</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Help Center</a></li>
-                <li><a href="#" className="hover:text-white">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
+              <h4 className="font-semibold mb-6 text-lg">Support</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 TUTAGORA. All rights reserved. Made with ❤️ for Africa.</p>
+          <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 TUTAGORA. All rights reserved. Made with ❤️ for Africa's future.</p>
           </div>
         </div>
       </footer>
