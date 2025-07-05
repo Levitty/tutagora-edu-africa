@@ -1,13 +1,24 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Brain, BookOpen, Target, Zap, TrendingUp } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Brain, BookOpen, Target, Zap, TrendingUp, Lock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import AILearningGame from "@/components/ai/AILearningGame";
+import { toast } from "sonner";
 
 const AILearning = () => {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      toast.error("Please sign in to access AI Learning");
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
 
   const subjects = [
     { name: "Mathematics", icon: "📐", color: "bg-blue-100 text-blue-800", description: "Algebra, Geometry, Calculus" },
@@ -17,6 +28,41 @@ const AILearning = () => {
     { name: "English", icon: "📚", color: "bg-yellow-100 text-yellow-800", description: "Grammar, Literature, Writing" },
     { name: "History", icon: "🏛️", color: "bg-indigo-100 text-indigo-800", description: "World History, African History" }
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Brain className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-pulse" />
+          <p>Loading AI Learning...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <Lock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">
+              Please sign in to access our AI-powered learning games and adaptive challenges.
+            </p>
+            <div className="space-y-3">
+              <Button className="w-full" onClick={() => navigate("/auth")}>
+                Sign In to Continue
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => navigate("/")}>
+                Back to Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (selectedSubject) {
     return (
@@ -35,7 +81,7 @@ const AILearning = () => {
                 AI Learning - {selectedSubject}
               </h1>
               <p className="text-gray-600">
-                Challenge yourself with AI-powered adaptive learning
+                Challenge yourself with adaptive learning games
               </p>
             </div>
           </div>
@@ -60,11 +106,14 @@ const AILearning = () => {
                 <p className="text-gray-600">Personalized learning powered by AI</p>
               </div>
             </div>
-            <Link to="/">
-              <Button variant="outline">
-                Back to Dashboard
-              </Button>
-            </Link>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">Welcome, {user.email}</span>
+              <Link to="/">
+                <Button variant="outline">
+                  Back to Home
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -86,46 +135,46 @@ const AILearning = () => {
           </p>
         </div>
 
-        {/* Features */}
+        {/* Game Modes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <Card className="text-center">
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                 <Target className="h-6 w-6 text-green-600" />
               </div>
-              <CardTitle>Adaptive Learning</CardTitle>
+              <CardTitle>Quiz Mode</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">
-                AI adjusts difficulty based on your performance and learning patterns.
+                Take your time to think through questions with detailed explanations.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="text-center">
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                 <Zap className="h-6 w-6 text-purple-600" />
               </div>
-              <CardTitle>Interactive Games</CardTitle>
+              <CardTitle>Speed Challenge</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">
-                Learn through engaging quizzes and interactive challenges.
+                Race against time with 30 seconds per question for bonus points.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="text-center">
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
                 <TrendingUp className="h-6 w-6 text-orange-600" />
               </div>
-              <CardTitle>Progress Tracking</CardTitle>
+              <CardTitle>Adaptive Mode</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">
-                Monitor your learning journey with detailed analytics and insights.
+                Questions adapt to your performance level for optimal learning.
               </p>
             </CardContent>
           </Card>
@@ -167,9 +216,9 @@ const AILearning = () => {
         <div className="text-center">
           <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
             <CardContent className="py-12">
-              <h3 className="text-2xl font-bold mb-4">Ready to Transform Your Learning?</h3>
+              <h3 className="text-2xl font-bold mb-4">Ready to Challenge Yourself?</h3>
               <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-                Join thousands of students who are already learning smarter with our AI-powered platform.
+                Start with any subject and watch as our AI adapts to your learning style and pace.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
@@ -177,7 +226,7 @@ const AILearning = () => {
                   variant="secondary"
                   onClick={() => setSelectedSubject("Mathematics")}
                 >
-                  Try Demo Game
+                  Try Mathematics
                 </Button>
                 <Link to="/browse-tutors">
                   <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-blue-600">

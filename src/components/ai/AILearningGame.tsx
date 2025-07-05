@@ -1,218 +1,397 @@
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
-import { Brain, Trophy, Target, Zap } from 'lucide-react'
-import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from '@/hooks/useAuth'
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Brain, CheckCircle, XCircle, RotateCcw, Trophy, Clock } from "lucide-react";
+import { toast } from "sonner";
 
 interface Question {
-  id: number
-  question: string
-  options: string[]
-  correct: number
-  explanation: string
+  id: number;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  topic: string;
 }
 
-const AILearningGame = ({ subject }: { subject: string }) => {
-  const { user } = useAuth()
-  const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [score, setScore] = useState(0)
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
-  const [showExplanation, setShowExplanation] = useState(false)
-  const [gameCompleted, setGameCompleted] = useState(false)
-  const [questions, setQuestions] = useState<Question[]>([])
+interface AILearningGameProps {
+  subject: string;
+}
 
-  // Sample questions - in a real app, these would come from an AI service
-  const sampleQuestions: Question[] = [
-    {
-      id: 1,
-      question: "What is 2 + 2?",
-      options: ["3", "4", "5", "6"],
-      correct: 1,
-      explanation: "2 + 2 = 4. This is basic addition."
-    },
-    {
-      id: 2,
-      question: "Which planet is closest to the Sun?",
-      options: ["Venus", "Mercury", "Earth", "Mars"],
-      correct: 1,
-      explanation: "Mercury is the closest planet to the Sun in our solar system."
-    },
-    {
-      id: 3,
-      question: "What is the capital of Kenya?",
-      options: ["Mombasa", "Kisumu", "Nairobi", "Nakuru"],
-      correct: 2,
-      explanation: "Nairobi is the capital and largest city of Kenya."
-    }
-  ]
+const AILearningGame = ({ subject }: AILearningGameProps) => {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [score, setScore] = useState(0);
+  const [gameMode, setGameMode] = useState<'quiz' | 'challenge' | 'speed'>('quiz');
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [isActive, setIsActive] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [questions, setQuestions] = useState<Question[]>([]);
+
+  // Subject-specific question banks
+  const questionBanks = {
+    Mathematics: [
+      {
+        id: 1,
+        question: "What is the value of x in the equation 2x + 5 = 13?",
+        options: ["3", "4", "5", "6"],
+        correctAnswer: 1,
+        explanation: "Subtract 5 from both sides: 2x = 8, then divide by 2: x = 4",
+        difficulty: 'easy' as const,
+        topic: "Algebra"
+      },
+      {
+        id: 2,
+        question: "What is the derivative of x²?",
+        options: ["x", "2x", "x²", "2x²"],
+        correctAnswer: 1,
+        explanation: "Using the power rule: d/dx(x²) = 2x¹ = 2x",
+        difficulty: 'medium' as const,
+        topic: "Calculus"
+      },
+      {
+        id: 3,
+        question: "What is the area of a circle with radius 5?",
+        options: ["25π", "10π", "5π", "π"],
+        correctAnswer: 0,
+        explanation: "Area = πr² = π(5)² = 25π",
+        difficulty: 'easy' as const,
+        topic: "Geometry"
+      }
+    ],
+    Physics: [
+      {
+        id: 1,
+        question: "What is the unit of force?",
+        options: ["Joule", "Newton", "Watt", "Pascal"],
+        correctAnswer: 1,
+        explanation: "Newton (N) is the SI unit of force, named after Isaac Newton",
+        difficulty: 'easy' as const,
+        topic: "Mechanics"
+      },
+      {
+        id: 2,
+        question: "What is the speed of light in vacuum?",
+        options: ["3 × 10⁸ m/s", "3 × 10⁶ m/s", "3 × 10¹⁰ m/s", "3 × 10⁹ m/s"],
+        correctAnswer: 0,
+        explanation: "The speed of light in vacuum is approximately 3 × 10⁸ meters per second",
+        difficulty: 'medium' as const,
+        topic: "Optics"
+      }
+    ],
+    Chemistry: [
+      {
+        id: 1,
+        question: "What is the chemical symbol for Gold?",
+        options: ["Go", "Gd", "Au", "Ag"],
+        correctAnswer: 2,
+        explanation: "Au comes from the Latin word 'aurum' meaning gold",
+        difficulty: 'easy' as const,
+        topic: "Elements"
+      },
+      {
+        id: 2,
+        question: "What is the pH of pure water?",
+        options: ["6", "7", "8", "9"],
+        correctAnswer: 1,
+        explanation: "Pure water has a pH of 7, which is neutral",
+        difficulty: 'easy' as const,
+        topic: "Acids and Bases"
+      }
+    ],
+    Biology: [
+      {
+        id: 1,
+        question: "What is the powerhouse of the cell?",
+        options: ["Nucleus", "Ribosome", "Mitochondria", "Chloroplast"],
+        correctAnswer: 2,
+        explanation: "Mitochondria produce ATP, the energy currency of cells",
+        difficulty: 'easy' as const,
+        topic: "Cell Biology"
+      },
+      {
+        id: 2,
+        question: "How many chambers does a human heart have?",
+        options: ["2", "3", "4", "5"],
+        correctAnswer: 2,
+        explanation: "The human heart has 4 chambers: 2 atria and 2 ventricles",
+        difficulty: 'easy' as const,
+        topic: "Human Biology"
+      }
+    ],
+    English: [
+      {
+        id: 1,
+        question: "Which of these is a noun?",
+        options: ["Run", "Beautiful", "Happiness", "Quickly"],
+        correctAnswer: 2,
+        explanation: "Happiness is a noun - it names a thing (an emotion or state)",
+        difficulty: 'easy' as const,
+        topic: "Grammar"
+      },
+      {
+        id: 2,
+        question: "What is a synonym for 'happy'?",
+        options: ["Sad", "Joyful", "Angry", "Tired"],
+        correctAnswer: 1,
+        explanation: "Joyful means the same as happy - both express positive emotions",
+        difficulty: 'easy' as const,
+        topic: "Vocabulary"
+      }
+    ],
+    History: [
+      {
+        id: 1,
+        question: "In which year did World War II end?",
+        options: ["1944", "1945", "1946", "1947"],
+        correctAnswer: 1,
+        explanation: "World War II ended in 1945 with the surrender of Japan",
+        difficulty: 'easy' as const,
+        topic: "World History"
+      }
+    ]
+  };
 
   useEffect(() => {
-    setQuestions(sampleQuestions)
-  }, [subject])
+    const subjectQuestions = questionBanks[subject as keyof typeof questionBanks] || questionBanks.Mathematics;
+    setQuestions(subjectQuestions);
+  }, [subject]);
 
-  const handleAnswerSelect = (answerIndex: number) => {
-    if (selectedAnswer !== null) return
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
     
-    setSelectedAnswer(answerIndex)
-    setShowExplanation(true)
-    
-    if (answerIndex === questions[currentQuestion].correct) {
-      setScore(score + 1)
+    if (isActive && timeLeft > 0 && gameMode === 'speed') {
+      interval = setInterval(() => {
+        setTimeLeft(timeLeft => timeLeft - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && gameMode === 'speed') {
+      handleAnswer(-1); // Auto-submit wrong answer
     }
-  }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isActive, timeLeft, gameMode]);
 
-  const handleNextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1)
-      setSelectedAnswer(null)
-      setShowExplanation(false)
+  const handleAnswer = (answerIndex: number) => {
+    setSelectedAnswer(answerIndex);
+    setShowAnswer(true);
+    setIsActive(false);
+    
+    const correct = answerIndex === questions[currentQuestion].correctAnswer;
+    
+    if (correct) {
+      setScore(score + (gameMode === 'speed' ? timeLeft * 10 : 100));
+      setStreak(streak + 1);
+      toast.success("Correct! Well done!");
     } else {
-      setGameCompleted(true)
-      saveGameResults()
+      setStreak(0);
+      toast.error("Incorrect. Try again!");
     }
-  }
+  };
 
-  const saveGameResults = async () => {
-    if (!user?.id) return
-    
-    try {
-      await supabase.from('ai_learning_sessions').insert({
-        student_id: user.id,
-        subject,
-        difficulty_level: 'beginner',
-        score: Math.round((score / questions.length) * 100),
-        session_data: {
-          totalQuestions: questions.length,
-          correctAnswers: score,
-          completedAt: new Date().toISOString()
-        },
-        completed_at: new Date().toISOString()
-      })
-    } catch (error) {
-      console.error('Failed to save game results:', error)
+  const nextQuestion = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSelectedAnswer(null);
+      setShowAnswer(false);
+      setTimeLeft(gameMode === 'speed' ? 30 : 0);
+      setIsActive(gameMode === 'speed');
+    } else {
+      toast.success(`Game completed! Final score: ${score}`);
     }
-  }
+  };
 
   const resetGame = () => {
-    setCurrentQuestion(0)
-    setScore(0)
-    setSelectedAnswer(null)
-    setShowExplanation(false)
-    setGameCompleted(false)
-  }
+    setCurrentQuestion(0);
+    setSelectedAnswer(null);
+    setShowAnswer(false);
+    setScore(0);
+    setStreak(0);
+    setTimeLeft(30);
+    setIsActive(false);
+  };
 
-  if (gameCompleted) {
-    const percentage = Math.round((score / questions.length) * 100)
-    return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2">
-            <Trophy className="h-6 w-6 text-yellow-500" />
-            Game Complete!
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-6">
-          <div className="space-y-4">
-            <div className="text-4xl font-bold text-green-600">{percentage}%</div>
-            <div className="text-lg">
-              You scored {score} out of {questions.length} questions correctly!
-            </div>
-            <Badge variant={percentage >= 80 ? "default" : percentage >= 60 ? "secondary" : "outline"}>
-              {percentage >= 80 ? "Excellent!" : percentage >= 60 ? "Good Job!" : "Keep Practicing!"}
-            </Badge>
-          </div>
-          <Button onClick={resetGame} className="w-full">
-            Play Again
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
+  const startGame = (mode: 'quiz' | 'challenge' | 'speed') => {
+    setGameMode(mode);
+    resetGame();
+    if (mode === 'speed') {
+      setIsActive(true);
+      setTimeLeft(30);
+    }
+  };
 
   if (questions.length === 0) {
     return (
-      <Card className="max-w-2xl mx-auto">
-        <CardContent className="text-center py-8">
-          <Brain className="h-12 w-12 mx-auto mb-4 text-blue-500 animate-pulse" />
-          <p>Loading AI Learning Game...</p>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Brain className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+          <p>Loading {subject} questions...</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  const question = questions[currentQuestion]
+  const question = questions[currentQuestion];
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-blue-500" />
-            {subject} Quiz
-          </CardTitle>
-          <Badge variant="outline">
-            {currentQuestion + 1} / {questions.length}
-          </Badge>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Progress</span>
-            <span className="flex items-center gap-1">
-              <Target className="h-4 w-4" />
-              Score: {score}/{currentQuestion + (selectedAnswer !== null ? 1 : 0)}
-            </span>
+    <div className="space-y-6">
+      {/* Game Mode Selection */}
+      {currentQuestion === 0 && !isActive && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Choose Your Game Mode</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => startGame('quiz')}
+              >
+                <Brain className="h-6 w-6 mb-2" />
+                <span>Quiz Mode</span>
+                <small className="text-gray-500">Take your time</small>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => startGame('challenge')}
+              >
+                <Trophy className="h-6 w-6 mb-2" />
+                <span>Challenge Mode</span>
+                <small className="text-gray-500">Adaptive difficulty</small>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center"
+                onClick={() => startGame('speed')}
+              >
+                <Clock className="h-6 w-6 mb-2" />
+                <span>Speed Mode</span>
+                <small className="text-gray-500">30 seconds per question</small>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Game Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">{score}</div>
+            <div className="text-sm text-gray-600">Score</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">{streak}</div>
+            <div className="text-sm text-gray-600">Streak</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-purple-600">{currentQuestion + 1}/{questions.length}</div>
+            <div className="text-sm text-gray-600">Question</div>
+          </CardContent>
+        </Card>
+        {gameMode === 'speed' && (
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className={`text-2xl font-bold ${timeLeft <= 10 ? 'text-red-600' : 'text-orange-600'}`}>
+                {timeLeft}s
+              </div>
+              <div className="text-sm text-gray-600">Time Left</div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Progress Bar */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Progress</span>
+            <span className="text-sm text-gray-600">{Math.round(progress)}%</span>
           </div>
-          <Progress value={(currentQuestion / questions.length) * 100} />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="text-lg font-medium">{question.question}</div>
-        
-        <div className="space-y-3">
-          {question.options.map((option, index) => (
-            <Button
-              key={index}
-              variant={
-                selectedAnswer === null 
-                  ? "outline" 
-                  : index === question.correct 
-                    ? "default" 
-                    : selectedAnswer === index 
-                      ? "destructive" 
+          <Progress value={progress} className="h-2" />
+        </CardContent>
+      </Card>
+
+      {/* Question Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <Badge variant="secondary">{question.topic}</Badge>
+            <Badge variant={question.difficulty === 'easy' ? 'default' : question.difficulty === 'medium' ? 'secondary' : 'destructive'}>
+              {question.difficulty}
+            </Badge>
+          </div>
+          <CardTitle className="text-xl">{question.question}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3">
+            {question.options.map((option, index) => (
+              <Button
+                key={index}
+                variant={
+                  showAnswer
+                    ? index === question.correctAnswer
+                      ? "default"
+                      : selectedAnswer === index
+                      ? "destructive"
                       : "outline"
-              }
-              className="w-full justify-start h-auto p-4"
-              onClick={() => handleAnswerSelect(index)}
-              disabled={selectedAnswer !== null}
-            >
-              <span className="mr-3 font-bold">{String.fromCharCode(65 + index)}.</span>
-              {option}
-              {selectedAnswer !== null && index === question.correct && (
-                <Zap className="h-4 w-4 ml-auto text-green-600" />
-              )}
-            </Button>
-          ))}
-        </div>
-
-        {showExplanation && (
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="font-medium text-blue-900 mb-2">Explanation:</div>
-            <div className="text-blue-800">{question.explanation}</div>
+                    : selectedAnswer === index
+                    ? "secondary"
+                    : "outline"
+                }
+                className="text-left justify-start h-auto p-4"
+                onClick={() => !showAnswer && handleAnswer(index)}
+                disabled={showAnswer}
+              >
+                <div className="flex items-center">
+                  {showAnswer && index === question.correctAnswer && (
+                    <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                  )}
+                  {showAnswer && selectedAnswer === index && index !== question.correctAnswer && (
+                    <XCircle className="h-5 w-5 mr-2 text-red-600" />
+                  )}
+                  <span className="font-medium mr-3">{String.fromCharCode(65 + index)}.</span>
+                  {option}
+                </div>
+              </Button>
+            ))}
           </div>
-        )}
 
-        {showExplanation && (
-          <Button onClick={handleNextQuestion} className="w-full">
-            {currentQuestion < questions.length - 1 ? "Next Question" : "Complete Game"}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
+          {showAnswer && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-semibold text-blue-900 mb-2">Explanation:</h4>
+              <p className="text-blue-800">{question.explanation}</p>
+            </div>
+          )}
 
-export default AILearningGame
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={resetGame}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Restart
+            </Button>
+            {showAnswer && (
+              <Button onClick={nextQuestion}>
+                {currentQuestion < questions.length - 1 ? "Next Question" : "Finish Game"}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default AILearningGame;

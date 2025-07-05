@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,13 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Search, Filter, Star, Users, Clock, Video, Calendar as CalendarIcon, BookOpen } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const TutorBrowsing = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTutor, setSelectedTutor] = useState<number | null>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const subjects = [
     { id: "all", name: "All Subjects" },
@@ -142,8 +145,16 @@ const TutorBrowsing = () => {
   };
 
   const handleBookSession = (tutorId: number, time: string) => {
-    console.log(`Booking session with tutor ${tutorId} at ${time}`);
-    // Mock booking functionality - in real app would integrate with calendar API
+    if (!user) {
+      toast.error("Please sign in to book a session");
+      navigate("/auth");
+      return;
+    }
+    navigate(`/live-tutoring/tutor-${tutorId}`);
+  };
+
+  const handleViewCalendar = (tutorId: number) => {
+    setSelectedTutor(selectedTutor === tutorId ? null : tutorId);
   };
 
   return (
@@ -162,9 +173,18 @@ const TutorBrowsing = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/student-dashboard">
-                <Button variant="outline" size="sm">My Dashboard</Button>
+              <Link to="/">
+                <Button variant="outline" size="sm">Back to Home</Button>
               </Link>
+              {user ? (
+                <Link to="/student-dashboard">
+                  <Button variant="outline" size="sm">My Dashboard</Button>
+                </Link>
+              ) : (
+                <Link to="/auth">
+                  <Button size="sm">Sign In</Button>
+                </Link>
+              )}
               <Link to="/live-tutoring/demo-session">
                 <Button size="sm">
                   <Video className="h-4 w-4 mr-2" />
@@ -273,17 +293,18 @@ const TutorBrowsing = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => setSelectedTutor(selectedTutor === tutor.id ? null : tutor.id)}
+                                  onClick={() => handleViewCalendar(tutor.id)}
                                 >
                                   <CalendarIcon className="h-4 w-4 mr-2" />
                                   {selectedTutor === tutor.id ? 'Hide Calendar' : 'View Calendar'}
                                 </Button>
-                                <Link to={`/live-tutoring/tutor-${tutor.id}`}>
-                                  <Button size="sm">
-                                    <Video className="h-4 w-4 mr-2" />
-                                    Book Session
-                                  </Button>
-                                </Link>
+                                <Button 
+                                  size="sm"
+                                  onClick={() => handleBookSession(tutor.id, tutor.nextAvailable)}
+                                >
+                                  <Video className="h-4 w-4 mr-2" />
+                                  Book Session
+                                </Button>
                               </div>
                             </div>
                           </div>
