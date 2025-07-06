@@ -342,7 +342,7 @@ const TutorProfile = () => {
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Response Time</span>
-                  <span className="font-semibold">< 2 hours</span>
+                  <span className="font-semibold">&lt; 2 hours</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Completion Rate</span>
