@@ -11,6 +11,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import CourseDashboard from "./pages/CourseDashboard";
 import TutorBrowsing from "./pages/TutorBrowsing";
+import TutorProfile from "./pages/TutorProfile";
 import LiveTutoring from "./pages/LiveTutoring";
 import AILearning from "./pages/AILearning";
 import TutorAvailability from "./pages/TutorAvailability";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/tutor-dashboard" element={<TutorDashboard />} />
             <Route path="/course-dashboard" element={<CourseDashboard />} />
             <Route path="/browse-tutors" element={<TutorBrowsing />} />
+            <Route path="/tutor-profile/:tutorId" element={<TutorProfile />} />
             <Route path="/live-tutoring/:sessionId" element={<LiveTutoring />} />
             <Route path="/ai-learning" element={<AILearning />} />
             <Route path="/tutor-availability" element={<TutorAvailability />} />

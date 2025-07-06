@@ -1,10 +1,9 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
-import { BookOpen, LogOut, User, GraduationCap, Users, Star, ArrowRight, Play, CheckCircle, Globe, Award, TrendingUp, Briefcase, Target, Zap, Shield, Clock } from "lucide-react";
+import { BookOpen, LogOut, User, GraduationCap, Users, Star, ArrowRight, Play, CheckCircle, Globe, Award, TrendingUp, Briefcase, Target, Zap, Shield, Clock, UserPlus, Heart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
@@ -53,7 +52,7 @@ const Index = () => {
                 <p className="text-xs text-gray-500">Africa's Learning Platform</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {loading ? (
                 <div className="animate-pulse flex space-x-2">
                   <div className="h-8 w-16 bg-gray-200 rounded"></div>
@@ -94,6 +93,15 @@ const Index = () => {
                     Sign In
                   </Button>
                   <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => navigate("/auth")}
+                    className="flex items-center gap-2 border-orange-200 text-orange-700 hover:bg-orange-50"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Become a Tutor
+                  </Button>
+                  <Button 
                     size="sm" 
                     onClick={() => navigate("/auth")}
                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -111,20 +119,20 @@ const Index = () => {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-20">
           <div className="inline-flex items-center bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Zap className="h-4 w-4 mr-2" />
-            Transform Your Career with AI-Powered Learning
+            <Heart className="h-4 w-4 mr-2" />
+            Connecting African Learners with Expert Tutors
           </div>
           <h2 className="text-6xl md:text-7xl font-bold text-gray-900 mb-8 leading-tight">
-            Master Skills,
+            Learn from the Best,
             <br />
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Shape Africa's Future
+              Achieve Excellence
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto mb-12 leading-relaxed">
-            Join Africa's most innovative learning ecosystem. Connect with world-class tutors, 
-            master in-demand skills through AI-powered games, and accelerate your career in the 
-            global job market. From coding to critical thinking - we've got you covered.
+            Connect with Africa's most qualified tutors for personalized one-on-one learning. 
+            Master any subject through expert guidance, interactive AI games, and proven teaching methods. 
+            From KCSE preparation to university-level courses - unlock your potential with TUTAGORA.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
@@ -134,7 +142,7 @@ const Index = () => {
               className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-4 h-auto"
             >
               <Users className="h-5 w-5" />
-              Find Expert Tutors
+              Find Your Perfect Tutor
               <ArrowRight className="h-5 w-5" />
             </Button>
             <Button 
@@ -144,7 +152,7 @@ const Index = () => {
               className="flex items-center gap-3 border-2 border-purple-200 text-purple-700 hover:bg-purple-50 text-lg px-8 py-4 h-auto"
             >
               <GraduationCap className="h-5 w-5" />
-              Explore Learning Path
+              Start Learning Journey
               <Play className="h-5 w-5" />
             </Button>
           </div>
@@ -153,11 +161,11 @@ const Index = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">1,000+</div>
-              <div className="text-gray-600 text-sm">Expert Tutors</div>
+              <div className="text-gray-600 text-sm">Verified Tutors</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600 mb-2">25K+</div>
-              <div className="text-gray-600 text-sm">Success Stories</div>
+              <div className="text-gray-600 text-sm">Learning Sessions</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-purple-600 mb-2">54</div>
@@ -165,7 +173,7 @@ const Index = () => {
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-orange-600 mb-2">98%</div>
-              <div className="text-gray-600 text-sm">Job Success Rate</div>
+              <div className="text-gray-600 text-sm">Success Rate</div>
             </div>
           </div>
         </div>
@@ -177,7 +185,7 @@ const Index = () => {
               Why Choose TUTAGORA?
             </h3>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We combine human expertise with AI innovation to deliver personalized learning experiences that drive real career outcomes.
+              Experience personalized tutoring that adapts to your learning style, combined with cutting-edge AI technology for accelerated learning outcomes.
             </p>
           </div>
 
@@ -187,11 +195,11 @@ const Index = () => {
                 <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                   <Users className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-2xl mb-2">World-Class African Tutors</CardTitle>
+                <CardTitle className="text-2xl mb-2">Expert African Tutors</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-gray-600 mb-6 leading-relaxed">
-                  Learn from verified experts across Africa. Our tutors are industry professionals and academic leaders ready to accelerate your growth.
+                  Learn from verified tutors across Africa. Our educators are industry professionals, university graduates, and subject matter experts with proven track records.
                 </p>
                 <Button 
                   variant="outline" 
@@ -208,11 +216,11 @@ const Index = () => {
                 <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                   <GraduationCap className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-2xl mb-2">AI-Powered Adaptive Learning</CardTitle>
+                <CardTitle className="text-2xl mb-2">AI-Enhanced Learning</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-gray-600 mb-6 leading-relaxed">
-                  Experience personalized learning that adapts to your pace and style. Our AI games make complex subjects engaging and memorable.
+                  Complement your tutoring sessions with personalized AI games and adaptive learning. Practice concepts, test knowledge, and reinforce learning between sessions.
                 </p>
                 <Button 
                   variant="outline" 
@@ -229,18 +237,18 @@ const Index = () => {
                 <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                   <Briefcase className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-2xl mb-2">Career-Focused Upskilling</CardTitle>
+                <CardTitle className="text-2xl mb-2">Career-Ready Skills</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-gray-600 mb-6 leading-relaxed">
-                  Master in-demand skills for today's job market. From coding to critical thinking, we prepare you for global opportunities.
+                  Beyond academic excellence, master practical skills for today's job market. From critical thinking to digital literacy - prepare for global opportunities.
                 </p>
                 <Button 
                   variant="outline" 
                   onClick={() => navigate("/course-dashboard")}
                   className="w-full group-hover:bg-purple-600 group-hover:text-white transition-colors"
                 >
-                  Explore Careers
+                  Explore Skills
                 </Button>
               </CardContent>
             </Card>
@@ -376,6 +384,56 @@ const Index = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* For Tutors Section */}
+        <div className="bg-gradient-to-r from-orange-900 via-red-900 to-pink-900 rounded-3xl shadow-2xl p-12 mb-20 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-600/20 to-red-600/20 backdrop-blur-sm"></div>
+          <div className="relative z-10">
+            <div className="text-center mb-12">
+              <h3 className="text-4xl font-bold mb-4">
+                Share Your Expertise, Earn While Teaching
+              </h3>
+              <p className="text-xl text-orange-100 max-w-3xl mx-auto">
+                Join Africa's most innovative tutoring platform. Connect with eager learners, set your own schedule, and make a meaningful impact while earning a competitive income.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              <div className="text-center">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300">
+                  <Users className="h-12 w-12 text-orange-300 mx-auto mb-4" />
+                  <h4 className="text-xl font-semibold mb-2">Flexible Teaching</h4>
+                  <p className="text-orange-100">Set your own hours, rates, and teaching style</p>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300">
+                  <Award className="h-12 w-12 text-red-300 mx-auto mb-4" />
+                  <h4 className="text-xl font-semibold mb-2">Professional Growth</h4>
+                  <p className="text-orange-100">Expand your reach and build your reputation</p>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300">
+                  <TrendingUp className="h-12 w-12 text-pink-300 mx-auto mb-4" />
+                  <h4 className="text-xl font-semibold mb-2">Competitive Earnings</h4>
+                  <p className="text-orange-100">Earn KSh 500-2000+ per hour based on expertise</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/auth")}
+                className="bg-white text-red-900 hover:bg-gray-100 text-lg px-8 py-4 h-auto font-semibold"
+              >
+                <UserPlus className="h-5 w-5 mr-2" />
+                Become a TUTAGORA Tutor
+              </Button>
+            </div>
           </div>
         </div>
 

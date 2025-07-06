@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
-import { Search, Filter, Star, Users, Clock, Video, Calendar as CalendarIcon, BookOpen } from "lucide-react";
+import { Search, Filter, Star, Users, Clock, Video, Calendar as CalendarIcon, BookOpen, Play, Eye } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ const TutorBrowsing = () => {
       name: "Dr. Amina Ochieng",
       subjects: ["Mathematics", "Physics"],
       rating: 4.9,
+      totalReviews: 156,
       students: 245,
       experience: "8 years",
       price: "KSh 800/hour",
@@ -41,10 +43,13 @@ const TutorBrowsing = () => {
       university: "University of Nairobi",
       description: "Experienced mathematics and physics tutor specializing in KCSE preparation.",
       avatar: "/api/placeholder/150/150",
+      hasIntroVideo: true,
       availability: {
-        "2024-12-02": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM"],
-        "2024-12-03": ["10:00 AM", "1:00 PM", "3:00 PM"],
-        "2024-12-04": ["9:00 AM", "2:00 PM", "5:00 PM"]
+        "2024-12-02": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+        "2024-12-03": ["10:00 AM", "1:00 PM", "3:00 PM", "5:00 PM"],
+        "2024-12-04": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "7:00 PM"],
+        "2024-12-05": ["8:00 AM", "10:00 AM", "3:00 PM", "5:00 PM"],
+        "2024-12-06": ["9:00 AM", "1:00 PM", "4:00 PM", "6:00 PM"]
       },
       nextAvailable: "Today at 2:00 PM"
     },
@@ -53,6 +58,7 @@ const TutorBrowsing = () => {
       name: "Prof. Kwame Asante",
       subjects: ["Physics", "Chemistry"],
       rating: 4.8,
+      totalReviews: 132,
       students: 189,
       experience: "12 years",
       price: "KSh 1000/hour",
@@ -60,10 +66,13 @@ const TutorBrowsing = () => {
       university: "University of Ghana",
       description: "Physics professor with expertise in university-level concepts and JAMB preparation.",
       avatar: "/api/placeholder/150/150",
+      hasIntroVideo: false,
       availability: {
-        "2024-12-02": ["8:00 AM", "10:00 AM", "3:00 PM"],
-        "2024-12-03": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM"],
-        "2024-12-04": ["10:00 AM", "1:00 PM"]
+        "2024-12-02": ["8:00 AM", "10:00 AM", "3:00 PM", "5:00 PM"],
+        "2024-12-03": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+        "2024-12-04": ["10:00 AM", "1:00 PM", "4:00 PM"],
+        "2024-12-05": ["8:00 AM", "12:00 PM", "3:00 PM", "5:00 PM"],
+        "2024-12-06": ["9:00 AM", "2:00 PM", "5:00 PM", "7:00 PM"]
       },
       nextAvailable: "Tomorrow at 9:00 AM"
     },
@@ -72,6 +81,7 @@ const TutorBrowsing = () => {
       name: "Dr. Fatima Ibrahim",
       subjects: ["Chemistry", "Biology"],
       rating: 4.7,
+      totalReviews: 98,
       students: 156,
       experience: "6 years",
       price: "KSh 750/hour",
@@ -79,10 +89,13 @@ const TutorBrowsing = () => {
       university: "Ahmadu Bello University",
       description: "Chemistry and biology expert with focus on medical school preparation.",
       avatar: "/api/placeholder/150/150",
+      hasIntroVideo: true,
       availability: {
-        "2024-12-02": ["11:00 AM", "1:00 PM", "4:00 PM"],
-        "2024-12-03": ["9:00 AM", "3:00 PM", "5:00 PM"],
-        "2024-12-04": ["8:00 AM", "12:00 PM", "2:00 PM"]
+        "2024-12-02": ["11:00 AM", "1:00 PM", "4:00 PM", "6:00 PM"],
+        "2024-12-03": ["9:00 AM", "3:00 PM", "5:00 PM", "7:00 PM"],
+        "2024-12-04": ["8:00 AM", "12:00 PM", "2:00 PM", "5:00 PM"],
+        "2024-12-05": ["10:00 AM", "1:00 PM", "4:00 PM"],
+        "2024-12-06": ["9:00 AM", "11:00 AM", "3:00 PM", "6:00 PM"]
       },
       nextAvailable: "Today at 4:00 PM"
     },
@@ -151,6 +164,10 @@ const TutorBrowsing = () => {
       return;
     }
     navigate(`/live-tutoring/tutor-${tutorId}`);
+  };
+
+  const handleViewProfile = (tutorId: number) => {
+    navigate(`/tutor-profile/${tutorId}`);
   };
 
   const handleViewCalendar = (tutorId: number) => {
@@ -235,24 +252,42 @@ const TutorBrowsing = () => {
           <div className="lg:col-span-3">
             <div className="space-y-6">
               {filteredTutors.map((tutor) => (
-                <Card key={tutor.id} className="hover:shadow-lg transition-shadow">
+                <Card key={tutor.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row gap-6">
                       {/* Tutor Info */}
                       <div className="flex-1">
                         <div className="flex items-start gap-4">
-                          <Avatar className="h-16 w-16">
-                            <AvatarFallback>
-                              {tutor.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div 
+                            className="cursor-pointer"
+                            onClick={() => handleViewProfile(tutor.id)}
+                          >
+                            <Avatar className="h-20 w-20 hover:ring-2 hover:ring-blue-500 transition-all">
+                              <AvatarFallback>
+                                {tutor.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-2">
-                              <h3 className="text-xl font-bold">{tutor.name}</h3>
+                              <div>
+                                <h3 
+                                  className="text-xl font-bold hover:text-blue-600 cursor-pointer transition-colors"
+                                  onClick={() => handleViewProfile(tutor.id)}
+                                >
+                                  {tutor.name}
+                                </h3>
+                                {tutor.hasIntroVideo && (
+                                  <div className="flex items-center gap-1 text-sm text-blue-600 mt-1">
+                                    <Play className="h-3 w-3" />
+                                    <span>Intro video available</span>
+                                  </div>
+                                )}
+                              </div>
                               <div className="flex items-center">
                                 <Star className="h-4 w-4 text-yellow-400 mr-1" />
                                 <span className="font-medium">{tutor.rating}</span>
-                                <span className="text-gray-600 ml-1">({tutor.students} students)</span>
+                                <span className="text-gray-600 ml-1">({tutor.totalReviews} reviews)</span>
                               </div>
                             </div>
                             
@@ -293,6 +328,14 @@ const TutorBrowsing = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  onClick={() => handleViewProfile(tutor.id)}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Profile
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => handleViewCalendar(tutor.id)}
                                 >
                                   <CalendarIcon className="h-4 w-4 mr-2" />
@@ -303,48 +346,53 @@ const TutorBrowsing = () => {
                                   onClick={() => handleBookSession(tutor.id, tutor.nextAvailable)}
                                 >
                                   <Video className="h-4 w-4 mr-2" />
-                                  Book Session
+                                  Book Now
                                 </Button>
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Calendar View */}
+                        {/* Enhanced Calendar View */}
                         {selectedTutor === tutor.id && (
-                          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <h4 className="font-semibold mb-4">Available Time Slots</h4>
+                          <div className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border">
+                            <h4 className="font-semibold mb-4 text-lg">Available Time Slots</h4>
                             <div className="grid md:grid-cols-2 gap-6">
                               <div>
                                 <Calendar
                                   mode="single"
                                   selected={selectedDate}
                                   onSelect={setSelectedDate}
-                                  className="rounded-md border"
+                                  className="rounded-md border bg-white"
                                 />
                               </div>
                               
                               {selectedDate && (
                                 <div>
-                                  <h5 className="font-medium mb-3">
+                                  <h5 className="font-medium mb-3 text-gray-900">
                                     Available slots for {selectedDate.toDateString()}
                                   </h5>
-                                  <div className="space-y-2">
+                                  <div className="grid grid-cols-2 gap-2">
                                     {getAvailabilityForDate(tutor.id, selectedDate).map((time, index) => (
                                       <Button
                                         key={index}
                                         variant="outline"
-                                        className="w-full justify-start"
+                                        size="sm"
+                                        className="justify-start hover:bg-blue-100 hover:border-blue-300"
                                         onClick={() => handleBookSession(tutor.id, time)}
                                       >
                                         <Clock className="h-4 w-4 mr-2" />
                                         {time}
                                       </Button>
                                     ))}
-                                    {getAvailabilityForDate(tutor.id, selectedDate).length === 0 && (
-                                      <p className="text-gray-600 text-sm">No available slots for this date</p>
-                                    )}
                                   </div>
+                                  {getAvailabilityForDate(tutor.id, selectedDate).length === 0 && (
+                                    <div className="text-center py-8">
+                                      <Clock className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                                      <p className="text-gray-600">No available slots for this date</p>
+                                      <p className="text-sm text-gray-500 mt-1">Try selecting another date</p>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
