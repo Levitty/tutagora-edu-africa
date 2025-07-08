@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +13,7 @@ import TutorBrowsing from "./pages/TutorBrowsing";
 import TutorProfile from "./pages/TutorProfile";
 import LiveTutoring from "./pages/LiveTutoring";
 import AILearning from "./pages/AILearning";
+import AIStudyAssistantPage from "./pages/AIStudyAssistant";
 import TutorAvailability from "./pages/TutorAvailability";
 import Certification from "./pages/Certification";
 import Auth from "./pages/Auth";
@@ -37,6 +37,7 @@ const App = () => (
             <Route path="/tutor-profile/:tutorId" element={<TutorProfile />} />
             <Route path="/live-tutoring/:sessionId" element={<LiveTutoring />} />
             <Route path="/ai-learning" element={<AILearning />} />
+            <Route path="/ai-study-assistant" element={<AIStudyAssistantPage />} />
             <Route path="/tutor-availability" element={<TutorAvailability />} />
             <Route path="/certification" element={<Certification />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
