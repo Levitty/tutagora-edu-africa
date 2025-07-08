@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,7 +59,7 @@ const TutorDashboard = () => {
   const isKycApproved = kycStatus === 'approved';
 
   const handleStartLiveClass = (channelName: string) => {
-    const liveClassUrl = `https://tutorlive.vercel.app/?channel=${channelName}`;
+    const liveClassUrl = `https://b180bd1b72aca12734ad-levittys-projects.vercel.app/create?channel=${channelName}`;
     window.open(liveClassUrl, '_blank', 'noopener,noreferrer');
   };
 
