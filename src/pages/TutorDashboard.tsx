@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Calendar, Users, Video, Award, Settings, Plus, Clock, Upload, FileText } from "lucide-react";
+import { BookOpen, Calendar, Users, Video, Award, Settings, Plus, Clock, Upload, FileText, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTutorCourses } from "@/hooks/useCourses";
 import { useProfile } from "@/hooks/useProfile";
@@ -16,11 +16,38 @@ const TutorDashboard = () => {
   const { data: courses = [] } = useTutorCourses();
   const { data: profile } = useProfile();
 
-  // Mock data for demonstration
+  // Mock data with channel names for Agora integration
   const upcomingSessions = [
-    { id: 1, student: "John Kamau", subject: "Mathematics", time: "2:00 PM", type: "1-on-1", sessionId: "math-101" },
-    { id: 2, student: "Sarah Oduya", subject: "Physics", time: "4:00 PM", type: "Group", sessionId: "physics-201" },
-    { id: 3, student: "Ahmed Hassan", subject: "Chemistry", time: "6:00 PM", type: "1-on-1", sessionId: "chem-301" }
+    { 
+      id: 1, 
+      student: "John Kamau", 
+      subject: "Mathematics", 
+      time: "2:00 PM", 
+      type: "1-on-1", 
+      sessionId: "math-101",
+      channelName: "john-mathematics-2025-01-08",
+      confirmed: true
+    },
+    { 
+      id: 2, 
+      student: "Sarah Oduya", 
+      subject: "Physics", 
+      time: "4:00 PM", 
+      type: "Group", 
+      sessionId: "physics-201",
+      channelName: "sarah-physics-2025-01-08",
+      confirmed: true
+    },
+    { 
+      id: 3, 
+      student: "Ahmed Hassan", 
+      subject: "Chemistry", 
+      time: "6:00 PM", 
+      type: "1-on-1", 
+      sessionId: "chem-301",
+      channelName: "ahmed-chemistry-2025-01-08",
+      confirmed: false
+    }
   ];
 
   const recentStudents = [
@@ -31,6 +58,18 @@ const TutorDashboard = () => {
 
   const kycStatus = profile?.kyc_status || 'pending';
   const isKycApproved = kycStatus === 'approved';
+
+  const handleStartLiveClass = (channelName: string) => {
+    const liveClassUrl = `https://tutorlive.vercel.app/?channel=${channelName}`;
+    window.open(liveClassUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const generateChannelName = (studentName: string, subject: string) => {
+    const firstName = studentName.split(' ')[0].toLowerCase();
+    const subjectFormatted = subject.toLowerCase().replace(/\s+/g, '');
+    const date = new Date().toISOString().split('T')[0];
+    return `${firstName}-${subjectFormatted}-${date}`;
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -131,18 +170,35 @@ const TutorDashboard = () => {
                         <div>
                           <h3 className="font-semibold">{session.student}</h3>
                           <p className="text-gray-600 text-sm">{session.subject} • {session.type}</p>
+                          <p className="text-xs text-gray-500">Channel: {session.channelName}</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">{session.time}</p>
                         <Badge variant="outline">{session.type}</Badge>
+                        <Badge variant={session.confirmed ? "default" : "secondary"} className="ml-1">
+                          {session.confirmed ? "Confirmed" : "Pending"}
+                        </Badge>
                       </div>
-                      <Link to={`/live-tutoring/${session.sessionId}`}>
-                        <Button size="sm" disabled={!isKycApproved}>
-                          <Video className="h-4 w-4 mr-2" />
-                          Start
-                        </Button>
-                      </Link>
+                      <div className="flex gap-2">
+                        <Link to={`/live-tutoring/${session.sessionId}`}>
+                          <Button size="sm" variant="outline" disabled={!isKycApproved}>
+                            <Video className="h-4 w-4 mr-2" />
+                            Legacy
+                          </Button>
+                        </Link>
+                        {session.confirmed && (
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleStartLiveClass(session.channelName)}
+                            disabled={!isKycApproved}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Start Live
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </CardContent>

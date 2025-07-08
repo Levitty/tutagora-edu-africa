@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Calendar, Clock, Video, Award, User, Download, Play, Brain } from "lucide-react";
+import { BookOpen, Calendar, Clock, Video, Award, User, Download, Play, Brain, MessageCircle, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import AILearningGame from "@/components/ai/AILearningGame";
 import { useCourses } from "@/hooks/useCourses";
@@ -17,9 +17,33 @@ const StudentDashboard = () => {
 
   // Mock data for demonstration
   const upcomingClasses = [
-    { id: 1, subject: "Mathematics", tutor: "Dr. Amina Ochieng", time: "2:00 PM", date: "Today", sessionId: "math-101" },
-    { id: 2, subject: "Physics", tutor: "Prof. Kwame Asante", time: "4:00 PM", date: "Tomorrow", sessionId: "physics-201" },
-    { id: 3, subject: "Chemistry", tutor: "Dr. Fatima Ibrahim", time: "10:00 AM", date: "Wednesday", sessionId: "chem-301" }
+    { 
+      id: 1, 
+      subject: "Mathematics", 
+      tutor: "Dr. Amina Ochieng", 
+      time: "2:00 PM", 
+      date: "Today", 
+      sessionId: "math-101",
+      channelName: "john-mathematics-2025-01-08"
+    },
+    { 
+      id: 2, 
+      subject: "Physics", 
+      tutor: "Prof. Kwame Asante", 
+      time: "4:00 PM", 
+      date: "Tomorrow", 
+      sessionId: "physics-201",
+      channelName: "john-physics-2025-01-09"
+    },
+    { 
+      id: 3, 
+      subject: "Chemistry", 
+      tutor: "Dr. Fatima Ibrahim", 
+      time: "10:00 AM", 
+      date: "Wednesday", 
+      sessionId: "chem-301",
+      channelName: "john-chemistry-2025-01-10"
+    }
   ];
 
   const recentScores = [
@@ -29,6 +53,11 @@ const StudentDashboard = () => {
   ];
 
   const subjects = ["Mathematics", "Physics", "Chemistry", "Biology", "English"];
+
+  const handleJoinLiveClass = (channelName: string) => {
+    const liveClassUrl = `https://tutorlive.vercel.app/?channel=${channelName}`;
+    window.open(liveClassUrl, '_blank', 'noopener,noreferrer');
+  };
 
   if (selectedSubject) {
     return (
@@ -69,6 +98,12 @@ const StudentDashboard = () => {
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="secondary">3 classes today</Badge>
+              <Link to="/ai-study-assistant">
+                <Button variant="outline" size="sm">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  AI Assistant
+                </Button>
+              </Link>
               <Link to="/browse-tutors">
                 <Button variant="outline" size="sm">
                   <Calendar className="h-4 w-4 mr-2" />
@@ -124,6 +159,35 @@ const StudentDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* AI Study Assistant Card */}
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="flex items-center text-blue-800">
+                  <MessageCircle className="h-5 w-5 mr-2" />
+                  AI Study Assistant
+                </CardTitle>
+                <CardDescription className="text-blue-700">
+                  Get instant help with homework, assignments, and study questions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-3">
+                  <Link to="/ai-study-assistant">
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Ask AI Questions
+                    </Button>
+                  </Link>
+                  <Link to="/ai-learning">
+                    <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                      <Brain className="h-4 w-4 mr-2" />
+                      Play Learning Games
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* AI Learning Games */}
             <Card>
               <CardHeader>
@@ -171,12 +235,22 @@ const StudentDashboard = () => {
                       <p className="font-semibold">{cls.time}</p>
                       <p className="text-gray-600 text-sm">{cls.date}</p>
                     </div>
-                    <Link to={`/live-tutoring/${cls.sessionId}`}>
-                      <Button size="sm">
-                        <Video className="h-4 w-4 mr-2" />
-                        Join
+                    <div className="flex gap-2">
+                      <Link to={`/live-tutoring/${cls.sessionId}`}>
+                        <Button size="sm" variant="outline">
+                          <Video className="h-4 w-4 mr-2" />
+                          Legacy
+                        </Button>
+                      </Link>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleJoinLiveClass(cls.channelName)}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Join Live
                       </Button>
-                    </Link>
+                    </div>
                   </div>
                 ))}
               </CardContent>
@@ -261,6 +335,12 @@ const StudentDashboard = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <Link to="/ai-study-assistant">
+                  <Button variant="outline" className="w-full justify-start">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    AI Study Help
+                  </Button>
+                </Link>
                 <Link to="/course-dashboard">
                   <Button variant="outline" className="w-full justify-start">
                     <BookOpen className="h-4 w-4 mr-2" />
