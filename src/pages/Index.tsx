@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useIsSuperAdmin, useIsTutor, useIsStudent } from "@/hooks/useRole";
 import { Button } from "@/components/ui/button";
 import { BookOpen, LogOut, User, GraduationCap, Users, Star, ArrowRight, Play, CheckCircle, Globe, Award, TrendingUp, Briefcase, Target, Zap, Shield, Clock, UserPlus, Heart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const Index = () => {
   const { user, loading, signOut } = useAuth();
   const { data: profile } = useProfile();
+  const isSuperAdmin = useIsSuperAdmin();
+  const isTutor = useIsTutor();
+  const isStudent = useIsStudent();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -29,7 +33,10 @@ const Index = () => {
   };
 
   const getDashboardRoute = () => {
-    if (profile?.user_type === 'tutor') {
+    if (isSuperAdmin) {
+      return "/super-admin-dashboard";
+    }
+    if (isTutor) {
       return "/tutor-dashboard";
     }
     return "/student-dashboard";
@@ -148,11 +155,11 @@ const Index = () => {
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => navigate("/student-dashboard")}
+              onClick={() => handleAuthenticatedAction("/ai-learning")}
               className="flex items-center gap-3 border-2 border-purple-200 text-purple-700 hover:bg-purple-50 text-lg px-8 py-4 h-auto"
             >
               <GraduationCap className="h-5 w-5" />
-              Start Learning Journey
+              Try AI Learning
               <Play className="h-5 w-5" />
             </Button>
           </div>
@@ -224,7 +231,7 @@ const Index = () => {
                 </p>
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate("/student-dashboard")}
+                  onClick={() => handleAuthenticatedAction("/ai-learning")}
                   className="w-full group-hover:bg-green-600 group-hover:text-white transition-colors"
                 >
                   Try AI Learning
@@ -245,7 +252,7 @@ const Index = () => {
                 </p>
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate("/course-dashboard")}
+                  onClick={() => handleAuthenticatedAction("/course-dashboard")}
                   className="w-full group-hover:bg-purple-600 group-hover:text-white transition-colors"
                 >
                   Explore Skills
@@ -490,15 +497,15 @@ const Index = () => {
               <h4 className="font-semibold mb-6 text-lg">For Students</h4>
               <ul className="space-y-3 text-gray-400">
                 <li><button onClick={() => navigate("/browse-tutors")} className="hover:text-white transition-colors">Find Tutors</button></li>
-                <li><button onClick={() => navigate("/student-dashboard")} className="hover:text-white transition-colors">AI Learning</button></li>
-                <li><button onClick={() => navigate("/course-dashboard")} className="hover:text-white transition-colors">Courses</button></li>
+                <li><button onClick={() => handleAuthenticatedAction("/ai-learning")} className="hover:text-white transition-colors">AI Learning</button></li>
+                <li><button onClick={() => handleAuthenticatedAction("/course-dashboard")} className="hover:text-white transition-colors">Courses</button></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-6 text-lg">For Tutors</h4>
               <ul className="space-y-3 text-gray-400">
                 <li><button onClick={() => navigate("/auth")} className="hover:text-white transition-colors">Become a Tutor</button></li>
-                <li><button onClick={() => navigate("/tutor-dashboard")} className="hover:text-white transition-colors">Tutor Dashboard</button></li>
+                <li><button onClick={() => handleAuthenticatedAction("/tutor-dashboard")} className="hover:text-white transition-colors">Tutor Dashboard</button></li>
               </ul>
             </div>
             <div>

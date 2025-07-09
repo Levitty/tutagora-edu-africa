@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import StudentDashboard from "./pages/StudentDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import CourseDashboard from "./pages/CourseDashboard";
 import TutorBrowsing from "./pages/TutorBrowsing";
 import TutorProfile from "./pages/TutorProfile";
@@ -32,6 +34,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/student-dashboard" element={<StudentDashboard />} />
             <Route path="/tutor-dashboard" element={<TutorDashboard />} />
+            <Route path="/super-admin-dashboard" element={<SuperAdminDashboard />} />
             <Route path="/course-dashboard" element={<CourseDashboard />} />
             <Route path="/browse-tutors" element={<TutorBrowsing />} />
             <Route path="/tutor-profile/:tutorId" element={<TutorProfile />} />

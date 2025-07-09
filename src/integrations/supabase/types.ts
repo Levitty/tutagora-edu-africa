@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics: {
+        Row: {
+          created_at: string | null
+          id: string
+          metric_date: string
+          metric_name: string
+          metric_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metric_date?: string
+          metric_name: string
+          metric_value: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metric_date?: string
+          metric_name?: string
+          metric_value?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           created_at: string
@@ -256,49 +283,103 @@ export type Database = {
       }
       profiles: {
         Row: {
+          available_hours: Json | null
           bio: string | null
+          certifications: string[] | null
           country: string | null
           created_at: string
+          education_background: string | null
           expertise: string[] | null
           first_name: string | null
+          grade_level: string | null
           hourly_rate: number | null
           id: string
           kyc_status: string | null
           last_name: string | null
+          learning_goals: string[] | null
           phone: string | null
+          preferred_subjects: string[] | null
           profile_photo_url: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          specializations: string[] | null
+          study_schedule: Json | null
+          teaching_experience: string | null
           updated_at: string
           user_type: string | null
         }
         Insert: {
+          available_hours?: Json | null
           bio?: string | null
+          certifications?: string[] | null
           country?: string | null
           created_at?: string
+          education_background?: string | null
           expertise?: string[] | null
           first_name?: string | null
+          grade_level?: string | null
           hourly_rate?: number | null
           id: string
           kyc_status?: string | null
           last_name?: string | null
+          learning_goals?: string[] | null
           phone?: string | null
+          preferred_subjects?: string[] | null
           profile_photo_url?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          specializations?: string[] | null
+          study_schedule?: Json | null
+          teaching_experience?: string | null
           updated_at?: string
           user_type?: string | null
         }
         Update: {
+          available_hours?: Json | null
           bio?: string | null
+          certifications?: string[] | null
           country?: string | null
           created_at?: string
+          education_background?: string | null
           expertise?: string[] | null
           first_name?: string | null
+          grade_level?: string | null
           hourly_rate?: number | null
           id?: string
           kyc_status?: string | null
           last_name?: string | null
+          learning_goals?: string[] | null
           phone?: string | null
+          preferred_subjects?: string[] | null
           profile_photo_url?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          specializations?: string[] | null
+          study_schedule?: Json | null
+          teaching_experience?: string | null
           updated_at?: string
           user_type?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -307,10 +388,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      is_super_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "tutor" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -437,6 +528,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "tutor", "student"],
+    },
   },
 } as const
