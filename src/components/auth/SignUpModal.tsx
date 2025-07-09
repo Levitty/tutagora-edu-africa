@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, User, GraduationCap } from "lucide-react";
+import { Loader2, User, GraduationCap, Shield } from "lucide-react";
 
 interface SignUpModalProps {
   open: boolean;
@@ -22,7 +22,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("");
-  const [userType, setUserType] = useState<"student" | "tutor">("student");
+  const [userType, setUserType] = useState<"student" | "tutor" | "admin">("student");
   const [loading, setLoading] = useState(false);
   
   const { signUp } = useAuth();
@@ -139,7 +139,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="userType">I want to join as</Label>
-            <Select value={userType} onValueChange={(value: "student" | "tutor") => setUserType(value)}>
+            <Select value={userType} onValueChange={(value: "student" | "tutor" | "admin") => setUserType(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -154,6 +154,12 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
                   <div className="flex items-center">
                     <GraduationCap className="h-4 w-4 mr-2" />
                     Tutor - Teach and earn money
+                  </div>
+                </SelectItem>
+                <SelectItem value="admin">
+                  <div className="flex items-center">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Super Admin - Platform administration
                   </div>
                 </SelectItem>
               </SelectContent>
