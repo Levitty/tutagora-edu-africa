@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, User, GraduationCap, Shield } from "lucide-react";
+import { Loader2, User, GraduationCap, Shield, AlertTriangle } from "lucide-react";
 
 interface SignUpModalProps {
   open: boolean;
@@ -51,7 +51,12 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
         user_type: userType
       });
       
-      toast.success("Account created successfully! Please check your email to verify your account.");
+      if (userType === 'tutor') {
+        toast.success("Account created successfully! Please check your email to verify your account. You'll need to complete KYC verification before you can start tutoring.");
+      } else {
+        toast.success("Account created successfully! Please check your email to verify your account.");
+      }
+      
       onOpenChange(false);
       
       // Reset form
@@ -164,6 +169,18 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
                 </SelectItem>
               </SelectContent>
             </Select>
+            
+            {userType === 'tutor' && (
+              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <div className="flex items-start">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium">KYC Verification Required</p>
+                    <p>As a tutor, you'll need to complete identity verification before you can start teaching and receiving payments.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="space-y-2">
