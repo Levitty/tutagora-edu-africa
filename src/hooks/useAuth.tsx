@@ -42,17 +42,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    console.log('Attempting sign in for:', email)
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
-    if (error) throw error
+    if (error) {
+      console.error('Sign in error:', error)
+      throw error
+    }
   }
 
   const signUp = async (email: string, password: string, userData: any) => {
+    console.log('Attempting sign up for:', email, 'with data:', userData)
     const redirectUrl = `${window.location.origin}/`
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -60,7 +65,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         data: userData
       }
     })
-    if (error) throw error
+    
+    if (error) {
+      console.error('Sign up error:', error)
+      throw error
+    }
+    
+    console.log('Sign up response:', data)
   }
 
   const signOut = async () => {

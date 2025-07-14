@@ -43,6 +43,15 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
     setLoading(true);
     
     try {
+      console.log("Attempting to sign up with:", {
+        email,
+        userType,
+        firstName,
+        lastName,
+        phone,
+        country
+      });
+
       await signUp(email, password, {
         first_name: firstName,
         last_name: lastName,
@@ -50,6 +59,8 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
         country,
         user_type: userType
       });
+      
+      console.log("Sign up successful");
       
       if (userType === 'tutor') {
         toast.success("Account created successfully! Please check your email to verify your account. You'll need to complete KYC verification before you can start tutoring.");
@@ -69,8 +80,26 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
       setCountry("");
       setUserType("student");
     } catch (error: any) {
-      console.error("Sign up error:", error);
-      toast.error(error.message || "Failed to create account");
+      console.error("Sign up error details:", {
+        error: error,
+        message: error?.message,
+        code: error?.code,
+        details: error?.details
+      });
+      
+      // More specific error handling
+      let errorMessage = "Failed to create account";
+      if (error?.message?.includes("User already registered")) {
+        errorMessage = "An account with this email already exists";
+      } else if (error?.message?.includes("Invalid email")) {
+        errorMessage = "Please enter a valid email address";
+      } else if (error?.message?.includes("Password")) {
+        errorMessage = "Password requirements not met";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
