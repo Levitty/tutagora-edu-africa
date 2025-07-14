@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import StudentDashboard from "./pages/StudentDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import InstitutionDashboard from "./pages/InstitutionDashboard";
 import CourseDashboard from "./pages/CourseDashboard";
 import TutorBrowsing from "./pages/TutorBrowsing";
 import TutorProfile from "./pages/TutorProfile";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/student-dashboard" element={<StudentDashboard />} />
             <Route path="/tutor-dashboard" element={<TutorDashboard />} />
             <Route path="/super-admin-dashboard" element={<SuperAdminDashboard />} />
+            <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
             <Route path="/course-dashboard" element={<CourseDashboard />} />
             <Route path="/browse-tutors" element={<TutorBrowsing />} />
             <Route path="/tutor-profile/:tutorId" element={<TutorProfile />} />
