@@ -15,21 +15,16 @@ const Index = () => {
   useEffect(() => {
     if (!authLoading && !roleLoading && user && userRole) {
       // Redirect authenticated users to their appropriate dashboard
-      switch (userRole) {
-        case 'student':
-          navigate('/student-dashboard');
-          break;
-        case 'tutor':
-          navigate('/tutor-dashboard');
-          break;
-        case 'super_admin':
-          navigate('/super-admin-dashboard');
-          break;
-        case 'institution':
-          navigate('/institution-dashboard');
-          break;
-        default:
-          navigate('/student-dashboard');
+      if (userRole === 'student') {
+        navigate('/student-dashboard');
+      } else if (userRole === 'tutor') {
+        navigate('/tutor-dashboard');
+      } else if (userRole === 'super_admin') {
+        navigate('/super-admin-dashboard');
+      } else if (userRole === 'institution') {
+        navigate('/institution-dashboard');
+      } else {
+        navigate('/student-dashboard');
       }
     }
   }, [user, userRole, authLoading, roleLoading, navigate]);
