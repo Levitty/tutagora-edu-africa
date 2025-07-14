@@ -364,21 +364,18 @@ export type Database = {
           assigned_at: string | null
           assigned_by: string | null
           id: string
-          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           assigned_at?: string | null
           assigned_by?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -388,13 +385,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _user_id: string
-          _role: Database["public"]["Enums"]["app_role"]
-        }
-        Returns: boolean
-      }
       is_super_admin: {
         Args: { _user_id: string }
         Returns: boolean
