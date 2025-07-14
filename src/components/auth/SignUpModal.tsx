@@ -43,14 +43,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
     setLoading(true);
     
     try {
-      console.log("Attempting to sign up with:", {
-        email,
-        userType,
-        firstName,
-        lastName,
-        phone,
-        country
-      });
+      console.log("Starting registration process...");
 
       await signUp(email, password, {
         first_name: firstName,
@@ -60,7 +53,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
         user_type: userType
       });
       
-      console.log("Sign up successful");
+      console.log("Registration successful");
       
       if (userType === 'tutor') {
         toast.success("Account created successfully! Please check your email to verify your account. You'll need to complete KYC verification before you can start tutoring.");
@@ -80,21 +73,15 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
       setCountry("");
       setUserType("student");
     } catch (error: any) {
-      console.error("Sign up error details:", {
-        error: error,
-        message: error?.message,
-        code: error?.code,
-        details: error?.details
-      });
+      console.error("Registration failed:", error);
       
-      // More specific error handling
-      let errorMessage = "Failed to create account";
+      let errorMessage = "Failed to create account. Please try again.";
       if (error?.message?.includes("User already registered")) {
-        errorMessage = "An account with this email already exists";
+        errorMessage = "An account with this email already exists. Please try signing in instead.";
       } else if (error?.message?.includes("Invalid email")) {
-        errorMessage = "Please enter a valid email address";
+        errorMessage = "Please enter a valid email address.";
       } else if (error?.message?.includes("Password")) {
-        errorMessage = "Password requirements not met";
+        errorMessage = "Password requirements not met. Please use at least 6 characters.";
       } else if (error?.message) {
         errorMessage = error.message;
       }

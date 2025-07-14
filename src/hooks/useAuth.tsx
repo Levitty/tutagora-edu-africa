@@ -72,6 +72,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     console.log('Sign up response:', data)
+    
+    // If user is created but not confirmed, that's expected behavior
+    if (data.user && !data.session) {
+      console.log('User created, email confirmation required')
+    }
   }
 
   const signOut = async () => {
