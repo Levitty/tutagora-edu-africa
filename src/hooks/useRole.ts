@@ -38,8 +38,3 @@ export const useIsStudent = () => {
   const { data: role } = useRole()
   return role === 'student'
 }
-
-export const useIsInstitution = () => {
-  const { data: role } = useRole()
-  return role === 'institution'
-}

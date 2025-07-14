@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, User, GraduationCap, Shield, AlertTriangle, Building } from "lucide-react";
+import { Loader2, User, GraduationCap, Shield, AlertTriangle } from "lucide-react";
 
 interface SignUpModalProps {
   open: boolean;
@@ -22,9 +22,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("");
-  const [userType, setUserType] = useState<"student" | "tutor" | "admin" | "institution">("student");
-  const [institutionName, setInstitutionName] = useState("");
-  const [institutionType, setInstitutionType] = useState("");
+  const [userType, setUserType] = useState<"student" | "tutor" | "admin">("student");
   const [loading, setLoading] = useState(false);
   
   const { signUp } = useAuth();
@@ -42,32 +40,19 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
       return;
     }
 
-    if (userType === 'institution' && !institutionName) {
-      toast.error("Institution name is required");
-      return;
-    }
-
     setLoading(true);
     
     try {
-      const userData = {
+      await signUp(email, password, {
         first_name: firstName,
         last_name: lastName,
         phone,
         country,
-        user_type: userType,
-        ...(userType === 'institution' && {
-          institution_name: institutionName,
-          institution_type: institutionType
-        })
-      };
-
-      await signUp(email, password, userData);
+        user_type: userType
+      });
       
       if (userType === 'tutor') {
         toast.success("Account created successfully! Please check your email to verify your account. You'll need to complete KYC verification before you can start tutoring.");
-      } else if (userType === 'institution') {
-        toast.success("Institution account created successfully! Please check your email to verify your account. You'll need to complete accreditation verification before offering courses.");
       } else {
         toast.success("Account created successfully! Please check your email to verify your account.");
       }
@@ -83,8 +68,6 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
       setPhone("");
       setCountry("");
       setUserType("student");
-      setInstitutionName("");
-      setInstitutionType("");
     } catch (error: any) {
       console.error("Sign up error:", error);
       toast.error(error.message || "Failed to create account");
@@ -95,7 +78,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create Your Account</DialogTitle>
           <DialogDescription>
@@ -161,7 +144,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="userType">I want to join as</Label>
-            <Select value={userType} onValueChange={(value: "student" | "tutor" | "admin" | "institution") => setUserType(value)}>
+            <Select value={userType} onValueChange={(value: "student" | "tutor" | "admin") => setUserType(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -176,12 +159,6 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
                   <div className="flex items-center">
                     <GraduationCap className="h-4 w-4 mr-2" />
                     Tutor - Teach and earn money
-                  </div>
-                </SelectItem>
-                <SelectItem value="institution">
-                  <div className="flex items-center">
-                    <Building className="h-4 w-4 mr-2" />
-                    Institution - Offer certificate courses
                   </div>
                 </SelectItem>
                 <SelectItem value="admin">
@@ -204,52 +181,7 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
                 </div>
               </div>
             )}
-
-            {userType === 'institution' && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <div className="flex items-start">
-                  <Building className="h-4 w-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium">Accreditation Required</p>
-                    <p>Institutions need to complete accreditation verification before offering certificate courses.</p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
-
-          {userType === 'institution' && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="institutionName">Institution Name</Label>
-                <Input
-                  id="institutionName"
-                  type="text"
-                  value={institutionName}
-                  onChange={(e) => setInstitutionName(e.target.value)}
-                  placeholder="e.g., ABC University"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="institutionType">Institution Type</Label>
-                <Select value={institutionType} onValueChange={setInstitutionType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select institution type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="university">University</SelectItem>
-                    <SelectItem value="college">College</SelectItem>
-                    <SelectItem value="technical">Technical Institute</SelectItem>
-                    <SelectItem value="training">Training Center</SelectItem>
-                    <SelectItem value="certification">Certification Body</SelectItem>
-                    <SelectItem value="corporate">Corporate Training</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </>
-          )}
           
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
