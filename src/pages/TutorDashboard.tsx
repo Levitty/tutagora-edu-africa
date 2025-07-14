@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BookOpen, Calendar, Users, Video, Award, Settings, Plus, Clock, Upload, FileText, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useTutorCourses } from "@/hooks/useCourses";
 import { useProfile } from "@/hooks/useProfile";
 import KYCUpload from "@/components/tutor/KYCUpload";
@@ -349,8 +350,9 @@ const TutorDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+    <ProtectedRoute requiredRole="tutor">
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -444,8 +446,9 @@ const TutorDashboard = () => {
         )}
 
         {renderTabContent()}
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 
