@@ -11,13 +11,20 @@ export const useRole = () => {
     queryFn: async () => {
       if (!user?.id) return null
       
+      console.log('Fetching role for user:', user.id);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
       
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching user role:', error);
+        throw error;
+      }
+      
+      console.log('User role data:', data);
       return data?.role || 'student'
     },
     enabled: !!user?.id,
@@ -26,15 +33,21 @@ export const useRole = () => {
 
 export const useIsSuperAdmin = () => {
   const { data: role } = useRole()
-  return role === 'super_admin'
+  const isSuperAdmin = role === 'super_admin'
+  console.log('useIsSuperAdmin - role:', role, 'isSuperAdmin:', isSuperAdmin);
+  return isSuperAdmin
 }
 
 export const useIsTutor = () => {
   const { data: role } = useRole()
-  return role === 'tutor'
+  const isTutor = role === 'tutor'
+  console.log('useIsTutor - role:', role, 'isTutor:', isTutor);
+  return isTutor
 }
 
 export const useIsStudent = () => {
   const { data: role } = useRole()
-  return role === 'student'
+  const isStudent = role === 'student'
+  console.log('useIsStudent - role:', role, 'isStudent:', isStudent);
+  return isStudent
 }

@@ -33,6 +33,10 @@ const Index = () => {
   };
 
   const getDashboardRoute = () => {
+    console.log('getDashboardRoute - isSuperAdmin:', isSuperAdmin);
+    console.log('getDashboardRoute - isTutor:', isTutor);
+    console.log('getDashboardRoute - isStudent:', isStudent);
+    
     if (isSuperAdmin) {
       return "/super-admin-dashboard";
     }
