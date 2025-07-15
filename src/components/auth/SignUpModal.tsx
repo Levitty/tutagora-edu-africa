@@ -32,48 +32,40 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
       title: "I am a Parent",
       description: "Manage payments or lessons for your child",
       icon: Heart,
-      gradient: "bg-gradient-to-br from-pink-400 via-pink-500 to-rose-500",
-      hoverGradient: "hover:from-pink-500 hover:via-pink-600 hover:to-rose-600",
-      iconColor: "text-pink-100",
-      borderColor: "border-pink-300 hover:border-pink-400",
-      shadowColor: "hover:shadow-pink-200",
-      textColor: "text-pink-50"
+      color: "from-pink-500 to-rose-500",
+      bgColor: "bg-pink-50",
+      textColor: "text-pink-700",
+      borderColor: "border-pink-200"
     },
     {
       type: "student" as const,
       title: "I am a Student",
       description: "Have lessons, message your tutor or watch your lessons back",
       icon: User,
-      gradient: "bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-500",
-      hoverGradient: "hover:from-blue-500 hover:via-blue-600 hover:to-indigo-600",
-      iconColor: "text-blue-100",
-      borderColor: "border-blue-300 hover:border-blue-400",
-      shadowColor: "hover:shadow-blue-200",
-      textColor: "text-blue-50"
+      color: "from-blue-500 to-indigo-500",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-700",
+      borderColor: "border-blue-200"
     },
     {
       type: "tutor" as const,
       title: "I am a Tutor",
       description: "Give lessons or manage bookings with your customers",
       icon: GraduationCap,
-      gradient: "bg-gradient-to-br from-emerald-400 via-green-500 to-teal-500",
-      hoverGradient: "hover:from-emerald-500 hover:via-green-600 hover:to-teal-600",
-      iconColor: "text-emerald-100",
-      borderColor: "border-emerald-300 hover:border-emerald-400",
-      shadowColor: "hover:shadow-emerald-200",
-      textColor: "text-emerald-50"
+      color: "from-emerald-500 to-teal-500",
+      bgColor: "bg-emerald-50",
+      textColor: "text-emerald-700",
+      borderColor: "border-emerald-200"
     },
     {
       type: "admin" as const,
       title: "I am an Admin",
       description: "Platform administration and management",
       icon: Shield,
-      gradient: "bg-gradient-to-br from-purple-400 via-violet-500 to-purple-600",
-      hoverGradient: "hover:from-purple-500 hover:via-violet-600 hover:to-purple-700",
-      iconColor: "text-purple-100",
-      borderColor: "border-purple-300 hover:border-purple-400",
-      shadowColor: "hover:shadow-purple-200",
-      textColor: "text-purple-50"
+      color: "from-purple-500 to-violet-500",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-700",
+      borderColor: "border-purple-200"
     }
   ];
 
@@ -144,89 +136,80 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-3xl text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="text-center">
+          <DialogTitle className="text-3xl font-bold text-gray-900">
             Create Your Account
           </DialogTitle>
-          <DialogDescription className="text-center text-lg text-muted-foreground">
+          <DialogDescription className="text-lg text-gray-600">
             Choose your account type and join TUTAGORA
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-8">
           {/* User Type Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {userTypes.map((type) => {
-              const Icon = type.icon;
-              const isSelected = userType === type.type;
-              
-              return (
-                <div
-                  key={type.type}
-                  className={`relative cursor-pointer transition-all duration-300 transform ${
-                    isSelected ? 'scale-105 -rotate-1' : 'hover:scale-105 hover:rotate-1'
-                  }`}
-                  onClick={() => setUserType(type.type)}
-                >
-                  <div
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 text-center">Choose your role</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {userTypes.map((type) => {
+                const Icon = type.icon;
+                const isSelected = userType === type.type;
+                
+                return (
+                  <button
+                    key={type.type}
+                    type="button"
+                    onClick={() => setUserType(type.type)}
                     className={`
-                      ${isSelected ? type.gradient : 'bg-white border-2'}
-                      ${!isSelected ? type.borderColor : ''}
-                      ${type.hoverGradient}
-                      rounded-2xl p-6 shadow-lg transition-all duration-300
-                      ${isSelected ? 'shadow-2xl' : `hover:shadow-xl ${type.shadowColor}`}
-                      ${isSelected ? 'border-0' : ''}
+                      relative p-6 rounded-xl border-2 transition-all duration-200 text-left
+                      ${isSelected 
+                        ? `${type.bgColor} ${type.borderColor} shadow-md` 
+                        : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                      }
                     `}
                   >
-                    <div className="text-center space-y-4">
-                      <div className="flex justify-center">
-                        <div className={`
-                          p-4 rounded-full transition-all duration-300
-                          ${isSelected 
-                            ? 'bg-white/20 backdrop-blur-sm transform rotate-12' 
-                            : 'bg-gray-100 hover:bg-gray-200'
-                          }
-                        `}>
-                          <Icon className={`
-                            h-12 w-12 transition-all duration-300
-                            ${isSelected ? type.iconColor : 'text-gray-600'}
-                            ${isSelected ? 'animate-pulse' : ''}
-                          `} />
-                        </div>
+                    <div className="space-y-3">
+                      <div className={`
+                        p-3 rounded-lg w-fit
+                        ${isSelected ? 'bg-white shadow-sm' : 'bg-gray-100'}
+                      `}>
+                        <Icon className={`
+                          h-6 w-6 transition-colors
+                          ${isSelected ? type.textColor : 'text-gray-600'}
+                        `} />
                       </div>
-                      <h3 className={`
-                        font-bold text-xl transition-colors duration-300
-                        ${isSelected ? type.textColor : 'text-gray-800'}
-                      `}>
-                        {type.title}
-                      </h3>
-                      <p className={`
-                        text-sm leading-relaxed transition-colors duration-300
-                        ${isSelected ? 'text-white/90' : 'text-gray-600'}
-                      `}>
-                        {type.description}
-                      </p>
-                      
-                      {isSelected && (
-                        <div className="animate-fade-in">
-                          <div className="w-full h-1 bg-white/30 rounded-full overflow-hidden">
-                            <div className="w-full h-full bg-white rounded-full animate-pulse"></div>
-                          </div>
-                        </div>
-                      )}
+                      <div>
+                        <h4 className={`
+                          font-semibold transition-colors
+                          ${isSelected ? type.textColor : 'text-gray-900'}
+                        `}>
+                          {type.title}
+                        </h4>
+                        <p className={`
+                          text-sm transition-colors
+                          ${isSelected ? type.textColor : 'text-gray-600'}
+                        `}>
+                          {type.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
+                    
+                    {isSelected && (
+                      <div className="absolute top-3 right-3">
+                        <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${type.color}`}></div>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {userType === 'tutor' && (
-            <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl animate-fade-in">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
               <div className="flex items-start">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0 animate-bounce" />
-                <div className="text-sm text-yellow-800">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
+                <div className="text-sm text-amber-800">
                   <p className="font-semibold">KYC Verification Required</p>
                   <p>As a tutor, you'll need to complete identity verification before you can start teaching and receiving payments.</p>
                 </div>
@@ -235,110 +218,111 @@ export const SignUpModal = ({ open, onOpenChange }: SignUpModalProps) => {
           )}
 
           {/* Registration Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium">First Name</Label>
-                <Input
-                  id="firstName"
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium">Last Name</Label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+254 700 000 000"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-                />
+          <div className="max-w-2xl mx-auto">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-sm font-medium">First Name</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="h-12"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-sm font-medium">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="h-12"
+                    required
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="country" className="text-sm font-medium">Country</Label>
+                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                 <Input
-                  id="country"
-                  type="text"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="Kenya"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12"
                   required
-                  minLength={6}
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-                  required
-                  minLength={6}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+254 700 000 000"
+                    className="h-12"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="country" className="text-sm font-medium">Country</Label>
+                  <Input
+                    id="country"
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="Kenya"
+                    className="h-12"
+                  />
+                </div>
               </div>
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02]" 
-              disabled={loading}
-              size="lg"
-            >
-              {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </Button>
-          </form>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-12"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="h-12"
+                    required
+                    minLength={6}
+                  />
+                </div>
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold" 
+                disabled={loading}
+              >
+                {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                {loading ? 'Creating Account...' : 'Create Account'}
+              </Button>
+            </form>
+          </div>
 
-          <div className="text-center text-sm text-muted-foreground bg-gray-50 p-4 rounded-lg">
+          <div className="text-center text-sm text-gray-500 bg-gray-50 p-4 rounded-lg">
             Need help? Call us on{" "}
             <span className="font-semibold text-blue-600">+44 (0) 203 773 6020</span> or{" "}
             <Button variant="link" className="p-0 h-auto text-sm font-medium text-blue-600 hover:text-blue-700">
