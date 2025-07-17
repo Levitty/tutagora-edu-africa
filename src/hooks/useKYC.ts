@@ -29,7 +29,15 @@ export const useUploadKYCDocument = () => {
   const { user } = useAuth()
   
   return useMutation({
-    mutationFn: async ({ file, documentType }: { file: File; documentType: string }) => {
+    mutationFn: async ({ 
+      file, 
+      documentType, 
+      academicQualificationType 
+    }: { 
+      file: File; 
+      documentType: string;
+      academicQualificationType?: string;
+    }) => {
       if (!user?.id) throw new Error('Not authenticated')
       
       const fileExt = file.name.split('.').pop()
@@ -45,13 +53,19 @@ export const useUploadKYCDocument = () => {
         .from('kyc-documents')
         .getPublicUrl(fileName)
       
+      const insertData: any = {
+        tutor_id: user.id,
+        document_type: documentType,
+        document_url: urlData.publicUrl,
+      }
+
+      if (academicQualificationType) {
+        insertData.academic_qualification_type = academicQualificationType
+      }
+      
       const { data, error } = await supabase
         .from('kyc_documents')
-        .insert({
-          tutor_id: user.id,
-          document_type: documentType,
-          document_url: urlData.publicUrl,
-        })
+        .insert(insertData)
         .select()
         .single()
       

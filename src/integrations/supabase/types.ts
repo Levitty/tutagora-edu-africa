@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_actions: {
+        Row: {
+          action_type: string
+          admin_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       ai_learning_sessions: {
         Row: {
           completed_at: string | null
@@ -73,6 +103,59 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      course_videos: {
+        Row: {
+          course_id: string
+          created_at: string | null
+          description: string | null
+          duration_seconds: number | null
+          id: string
+          is_published: boolean | null
+          order_index: number | null
+          thumbnail_url: string | null
+          title: string
+          tutor_id: string
+          updated_at: string | null
+          video_url: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          thumbnail_url?: string | null
+          title: string
+          tutor_id: string
+          updated_at?: string | null
+          video_url: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          tutor_id?: string
+          updated_at?: string | null
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_videos_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       courses: {
         Row: {
@@ -156,6 +239,7 @@ export type Database = {
       }
       kyc_documents: {
         Row: {
+          academic_qualification_type: string | null
           document_type: string
           document_url: string
           id: string
@@ -166,6 +250,7 @@ export type Database = {
           tutor_id: string
         }
         Insert: {
+          academic_qualification_type?: string | null
           document_type: string
           document_url: string
           id?: string
@@ -176,6 +261,7 @@ export type Database = {
           tutor_id: string
         }
         Update: {
+          academic_qualification_type?: string | null
           document_type?: string
           document_url?: string
           id?: string

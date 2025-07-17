@@ -1,13 +1,14 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Calendar, Users, Video, Award, Settings, AlertTriangle, CheckCircle, Upload, DollarSign, Star, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProfile } from "@/hooks/useProfile";
 import { TutorOnboarding } from "@/components/tutor/TutorOnboarding";
+import VideoUpload from "@/components/tutor/VideoUpload";
 
 export const TutorDashboard = () => {
   const { data: profile } = useProfile();
@@ -178,59 +179,137 @@ export const TutorDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Today's Sessions */}
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="videos">Video Content</TabsTrigger>
+            <TabsTrigger value="courses">Courses</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column - Sessions */}
+              <div className="lg:col-span-2 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="flex items-center">
+                        <Calendar className="h-5 w-5 mr-2" />
+                        Today's Sessions
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        Total: KSh {upcomingSessions.reduce((sum, session) => sum + session.earnings, 0)}
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {upcomingSessions.map((session) => (
+                      <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarFallback>{session.student.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-semibold">{session.student}</h3>
+                            <p className="text-gray-600 text-sm">{session.subject} • {session.type}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{session.time}</p>
+                          <p className="text-green-600 text-sm">KSh {session.earnings}</p>
+                          <Badge 
+                            variant={session.status === 'confirmed' ? 'default' : 'secondary'}
+                            className="mt-1"
+                          >
+                            {session.status}
+                          </Badge>
+                        </div>
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                          <Video className="h-4 w-4 mr-2" />
+                          Start
+                        </Button>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Column - Quick Actions & Earnings */}
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start h-12">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Create New Course
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start h-12">
+                      <Video className="h-4 w-4 mr-2" />
+                      Upload Video Content
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start h-12">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Schedule Session
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start h-12">
+                      <Users className="h-4 w-4 mr-2" />
+                      View Students
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <DollarSign className="h-5 w-5 mr-2" />
+                      Earnings Summary
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">This Month</span>
+                      <span className="font-semibold text-green-600">KSh {monthlyStats.totalEarnings.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Pending Payout</span>
+                      <span className="font-semibold text-orange-500">KSh {monthlyStats.pendingPayouts.toLocaleString()}</span>
+                    </div>
+                    <div className="pt-3 border-t">
+                      <Button className="w-full bg-green-600 hover:bg-green-700">
+                        Request Payout
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="videos" className="space-y-6">
+            <VideoUpload />
+          </TabsContent>
+
+          <TabsContent value="courses" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center">
-                    <Calendar className="h-5 w-5 mr-2" />
-                    Today's Sessions
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    Total: KSh {upcomingSessions.reduce((sum, session) => sum + session.earnings, 0)}
-                  </span>
-                </CardTitle>
+                <CardTitle>Course Management</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {upcomingSessions.map((session) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarFallback>{session.student.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold">{session.student}</h3>
-                        <p className="text-gray-600 text-sm">{session.subject} • {session.type}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{session.time}</p>
-                      <p className="text-green-600 text-sm">KSh {session.earnings}</p>
-                      <Badge 
-                        variant={session.status === 'confirmed' ? 'default' : 'secondary'}
-                        className="mt-1"
-                      >
-                        {session.status}
-                      </Badge>
-                    </div>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                      <Video className="h-4 w-4 mr-2" />
-                      Start
-                    </Button>
-                  </div>
-                ))}
+              <CardContent>
+                <p className="text-muted-foreground">Course management features coming soon...</p>
               </CardContent>
             </Card>
+          </TabsContent>
 
-            {/* Performance Metrics */}
+          <TabsContent value="analytics" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <TrendingUp className="h-5 w-5 mr-2" />
-                  Performance This Month
+                  Performance Analytics
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -254,90 +333,8 @@ export const TutorDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start h-12">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Create New Course
-                </Button>
-                <Button variant="outline" className="w-full justify-start h-12">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Schedule Session
-                </Button>
-                <Button variant="outline" className="w-full justify-start h-12">
-                  <Users className="h-4 w-4 mr-2" />
-                  View All Students
-                </Button>
-                <Button variant="outline" className="w-full justify-start h-12">
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Earnings Report
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Earnings Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <DollarSign className="h-5 w-5 mr-2" />
-                  Earnings Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">This Month</span>
-                  <span className="font-semibold text-green-600">KSh {monthlyStats.totalEarnings.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Pending Payout</span>
-                  <span className="font-semibold text-orange-500">KSh {monthlyStats.pendingPayouts.toLocaleString()}</span>
-                </div>
-                <div className="pt-3 border-t">
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
-                    Request Payout
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Reviews */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Award className="h-5 w-5 mr-2" />
-                  Recent Reviews
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <div className="text-yellow-400">⭐⭐⭐⭐⭐</div>
-                    <span className="ml-2 text-sm font-medium">John Kamau</span>
-                  </div>
-                  <p className="text-sm text-gray-600">"Excellent teaching methodology!"</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <div className="text-yellow-400">⭐⭐⭐⭐⭐</div>
-                    <span className="ml-2 text-sm font-medium">Sarah Oduya</span>
-                  </div>
-                  <p className="text-sm text-gray-600">"Very patient and knowledgeable."</p>
-                </div>
-                <Button variant="outline" className="w-full mt-3">
-                  View All Reviews
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
