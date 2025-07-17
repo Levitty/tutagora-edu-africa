@@ -7,8 +7,15 @@ import { Loader2 } from "lucide-react";
 
 export const DashboardRouter = () => {
   const { user, loading: authLoading } = useAuth();
-  const { data: role, isLoading: roleLoading } = useRole();
+  const { data: role, isLoading: roleLoading, refetch: refetchRole } = useRole();
   const navigate = useNavigate();
+
+  // Force refetch role when component mounts
+  useEffect(() => {
+    if (user?.id && !roleLoading) {
+      refetchRole();
+    }
+  }, [user?.id, refetchRole, roleLoading]);
 
   useEffect(() => {
     console.log('DashboardRouter - user:', user?.email);
@@ -50,6 +57,9 @@ export const DashboardRouter = () => {
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
           <div className="text-lg">Loading dashboard...</div>
+          <div className="text-sm text-muted-foreground mt-2">
+            {authLoading ? 'Loading user...' : 'Loading role...'}
+          </div>
         </div>
       </div>
     );

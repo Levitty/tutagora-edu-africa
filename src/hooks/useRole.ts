@@ -34,6 +34,8 @@ export const useRole = () => {
     enabled: !!user?.id,
     staleTime: 0, // Always refetch to get latest role
     gcTime: 0, // Don't cache the result (replaces cacheTime)
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   })
 }
 
