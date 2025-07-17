@@ -27,15 +27,19 @@ export const DashboardRouter = () => {
       return;
     }
 
-    // Route based on role
+    // Route based on role - fixed routing logic
     if (role === 'super_admin') {
       console.log('Redirecting to super admin dashboard');
       navigate("/super-admin-dashboard", { replace: true });
     } else if (role === 'tutor') {
       console.log('Redirecting to tutor dashboard');
       navigate("/tutor-dashboard", { replace: true });
-    } else {
+    } else if (role === 'student') {
       console.log('Redirecting to student dashboard');
+      navigate("/student-dashboard", { replace: true });
+    } else {
+      // Default fallback for any other role or undefined role
+      console.log('Unknown role, redirecting to student dashboard as fallback');
       navigate("/student-dashboard", { replace: true });
     }
   }, [user, role, authLoading, roleLoading, navigate]);

@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,12 @@ export const ProtectedRoute = ({
   const { user, loading: authLoading } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useRole();
 
+  console.log('ProtectedRoute - user:', user?.email);
+  console.log('ProtectedRoute - userRole:', userRole);
+  console.log('ProtectedRoute - requiredRole:', requiredRole);
+  console.log('ProtectedRoute - authLoading:', authLoading);
+  console.log('ProtectedRoute - roleLoading:', roleLoading);
+
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -33,7 +40,9 @@ export const ProtectedRoute = ({
     return <Navigate to="/auth" replace />;
   }
 
+  // If a specific role is required and user doesn't have it
   if (requiredRole && userRole !== requiredRole) {
+    console.log('Access denied - wrong role. Expected:', requiredRole, 'Got:', userRole);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -47,6 +56,9 @@ export const ProtectedRoute = ({
             <p>You do not have permission to access this page.</p>
             <p className="text-sm text-muted-foreground mt-2">
               Required role: {requiredRole}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your role: {userRole || 'undefined'}
             </p>
           </CardContent>
         </Card>
