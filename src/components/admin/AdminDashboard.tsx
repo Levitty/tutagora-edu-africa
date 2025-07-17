@@ -46,21 +46,36 @@ export const AdminDashboard = () => {
     }
   });
 
-  // Fetch pending KYC documents
+  // Fetch pending KYC documents with tutor profiles
   const { data: pendingKyc } = useQuery({
     queryKey: ['admin-pending-kyc'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('kyc_documents')
-        .select(`
-          *,
-          profiles!kyc_documents_tutor_id_fkey(first_name, last_name, email)
-        `)
+        .select('*')
         .eq('status', 'pending')
         .order('submitted_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+
+      // Fetch tutor profiles separately
+      if (data && data.length > 0) {
+        const tutorIds = [...new Set(data.map(doc => doc.tutor_id))];
+        const { data: tutorProfiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .in('id', tutorIds);
+
+        if (profileError) throw profileError;
+
+        // Combine the data
+        return data.map(doc => ({
+          ...doc,
+          tutor_profile: tutorProfiles?.find(profile => profile.id === doc.tutor_id)
+        }));
+      }
+
+      return data || [];
     }
   });
 
@@ -130,8 +145,8 @@ export const AdminDashboard = () => {
   };
 
   const filteredKyc = pendingKyc?.filter(doc => 
-    doc.profiles?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.profiles?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.tutor_profile?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.tutor_profile?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.document_type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -252,7 +267,7 @@ export const AdminDashboard = () => {
                           {getDocumentTypeIcon(doc.document_type)}
                           <div>
                             <h3 className="font-semibold">
-                              {doc.profiles?.first_name} {doc.profiles?.last_name}
+                              {doc.tutor_profile?.first_name} {doc.tutor_profile?.last_name}
                             </h3>
                             <p className="text-sm text-gray-600">
                               {getDocumentTypeLabel(doc.document_type)}
@@ -282,7 +297,7 @@ export const AdminDashboard = () => {
                             <DialogContent className="max-w-4xl">
                               <DialogHeader>
                                 <DialogTitle>
-                                  Review KYC Document - {doc.profiles?.first_name} {doc.profiles?.last_name}
+                                  Review KYC Document - {doc.tutor_profile?.first_name} {doc.tutor_profile?.last_name}
                                 </DialogTitle>
                               </DialogHeader>
                               <div className="space-y-4">
