@@ -25,9 +25,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+type KycDocumentWithProfile = {
+  id: string;
+  tutor_id: string;
+  document_type: string;
+  document_url: string;
+  status: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  notes: string | null;
+  academic_qualification_type: string | null;
+  tutor_profile?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+  };
+};
+
 export const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [selectedDocument, setSelectedDocument] = useState<KycDocumentWithProfile | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -63,7 +80,7 @@ export const AdminDashboard = () => {
         const tutorIds = [...new Set(data.map(doc => doc.tutor_id))];
         const { data: tutorProfiles, error: profileError } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name, email')
+          .select('id, first_name, last_name')
           .in('id', tutorIds);
 
         if (profileError) throw profileError;
@@ -72,10 +89,10 @@ export const AdminDashboard = () => {
         return data.map(doc => ({
           ...doc,
           tutor_profile: tutorProfiles?.find(profile => profile.id === doc.tutor_id)
-        }));
+        })) as KycDocumentWithProfile[];
       }
 
-      return data || [];
+      return [] as KycDocumentWithProfile[];
     }
   });
 
