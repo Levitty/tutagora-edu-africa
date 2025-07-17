@@ -33,7 +33,7 @@ export const useRole = () => {
     },
     enabled: !!user?.id,
     staleTime: 0, // Always refetch to get latest role
-    cacheTime: 0, // Don't cache the result
+    gcTime: 0, // Don't cache the result (replaces cacheTime)
   })
 }
 
