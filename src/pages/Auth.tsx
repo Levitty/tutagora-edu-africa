@@ -6,7 +6,8 @@ import { LoginModal } from "@/components/auth/LoginModal";
 import { SignUpModal } from "@/components/auth/SignUpModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import { BookOpen, RefreshCw } from "lucide-react";
+import { forceAuthRefresh } from "@/components/auth/AuthCleanup";
 
 const Auth = () => {
   const [showLogin, setShowLogin] = useState(false);
@@ -58,6 +59,17 @@ const Auth = () => {
             onClick={() => setShowSignUp(true)}
           >
             Create Account
+          </Button>
+          
+          {/* Debug button for clearing auth state */}
+          <Button 
+            variant="ghost" 
+            className="w-full text-xs" 
+            size="sm"
+            onClick={forceAuthRefresh}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Clear Auth & Refresh
           </Button>
         </CardContent>
       </Card>

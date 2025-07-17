@@ -9,9 +9,13 @@ export const useRole = () => {
   return useQuery({
     queryKey: ['user-role', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null
+      if (!user?.id) {
+        console.log('No user ID available for role fetch');
+        return null;
+      }
       
       console.log('Fetching role for user:', user.id);
+      console.log('User email:', user.email);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -24,10 +28,12 @@ export const useRole = () => {
         throw error;
       }
       
-      console.log('User role data:', data);
+      console.log('User role data from database:', data);
       return data?.role || 'student'
     },
     enabled: !!user?.id,
+    staleTime: 0, // Always refetch to get latest role
+    cacheTime: 0, // Don't cache the result
   })
 }
 
