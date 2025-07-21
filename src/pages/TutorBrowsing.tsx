@@ -53,15 +53,19 @@ const TutorBrowsing = () => {
     { id: "programming", name: "Programming" }
   ];
 
-  // Filter tutors based on search and subject
+  // Filter tutors based on search and subject - show all approved tutors
   const filteredTutors = tutors.filter(tutor => {
     const fullName = `${tutor.first_name} ${tutor.last_name}`.toLowerCase();
     const matchesSearch = fullName.includes(searchQuery.toLowerCase()) ||
                          (tutor.expertise || []).some((subject: string) => 
                            subject.toLowerCase().includes(searchQuery.toLowerCase())
                          );
+    // Show all approved tutors under all subjects unless searching specifically
     const matchesSubject = selectedSubject === "all" || 
                           (tutor.expertise || []).some((subject: string) => 
+                            subject.toLowerCase().includes(selectedSubject.toLowerCase())
+                          ) ||
+                          (tutor.preferred_subjects || []).some((subject: string) => 
                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
                           );
     return matchesSearch && matchesSubject;

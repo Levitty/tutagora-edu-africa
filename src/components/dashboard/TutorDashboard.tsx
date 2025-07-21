@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BookOpen, Calendar, Users, Video, Award, Settings, AlertTriangle, CheckCircle, Upload, DollarSign, Star, TrendingUp, Camera, Clock, Phone, Mail, MapPin, Edit, Plus, Trash2 } from "lucide-react";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { Link } from "react-router-dom";
 import { useProfile } from "@/hooks/useProfile";
 import { useBookings } from "@/hooks/useBookings";
@@ -55,20 +56,39 @@ export const TutorDashboard = () => {
     schedule: ''
   });
   
-  // Profile editing state
+  // Profile editing state - sync with profile data
   const [editProfile, setEditProfile] = useState({
-    first_name: profile?.first_name || '',
-    last_name: profile?.last_name || '',
-    bio: profile?.bio || '',
-    hourly_rate: profile?.hourly_rate || '',
-    phone: profile?.phone || '',
-    expertise: profile?.expertise || [],
-    specializations: profile?.specializations || [],
-    teaching_experience: profile?.teaching_experience || '',
-    education_background: profile?.education_background || '',
-    preferred_subjects: profile?.preferred_subjects || [],
-    certifications: profile?.certifications || []
+    first_name: '',
+    last_name: '',
+    bio: '',
+    hourly_rate: '',
+    phone: '',
+    expertise: [],
+    specializations: [],
+    teaching_experience: '',
+    education_background: '',
+    preferred_subjects: [],
+    certifications: []
   });
+
+  // Update form when profile loads
+  useEffect(() => {
+    if (profile) {
+      setEditProfile({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        bio: profile.bio || '',
+        hourly_rate: profile.hourly_rate?.toString() || '',
+        phone: profile.phone || '',
+        expertise: profile.expertise || [],
+        specializations: profile.specializations || [],
+        teaching_experience: profile.teaching_experience || '',
+        education_background: profile.education_background || '',
+        preferred_subjects: profile.preferred_subjects || [],
+        certifications: profile.certifications || []
+      });
+    }
+  }, [profile]);
 
   // Profile photo upload mutation
   const updateProfileMutation = useMutation({
@@ -199,6 +219,14 @@ export const TutorDashboard = () => {
   };
 
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  // Available subjects for selection
+  const availableSubjects = [
+    'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Geography', 
+    'History', 'Economics', 'Business Studies', 'Computer Science', 'Programming',
+    'French', 'German', 'Spanish', 'Kiswahili', 'Art', 'Music', 'Physical Education',
+    'Psychology', 'Philosophy', 'Statistics', 'Accounting', 'Government', 'Literature'
+  ];
 
   if (!isKycApproved) {
     return (
@@ -492,54 +520,45 @@ export const TutorDashboard = () => {
                                  placeholder="Your educational qualifications..."
                                />
                              </div>
-                             <div>
-                               <Label htmlFor="expertise">Areas of Expertise</Label>
-                               <Textarea
-                                 id="expertise"
-                                 value={Array.isArray(editProfile.expertise) ? editProfile.expertise.join(', ') : editProfile.expertise || ''}
-                                 onChange={(e) => setEditProfile(prev => ({ 
-                                   ...prev, 
-                                   expertise: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
-                                 }))}
-                                 placeholder="Enter your expertise areas separated by commas (e.g., Mathematics, Physics, Chemistry)"
-                               />
-                             </div>
-                             <div>
-                               <Label htmlFor="specializations">Specializations</Label>
-                               <Textarea
-                                 id="specializations"
-                                 value={Array.isArray(editProfile.specializations) ? editProfile.specializations.join(', ') : editProfile.specializations || ''}
-                                 onChange={(e) => setEditProfile(prev => ({ 
-                                   ...prev, 
-                                   specializations: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
-                                 }))}
-                                 placeholder="Enter your specializations separated by commas (e.g., STEM, Languages, Arts)"
-                               />
-                             </div>
-                             <div>
-                               <Label htmlFor="preferred_subjects">Preferred Teaching Subjects</Label>
-                               <Textarea
-                                 id="preferred_subjects"
-                                 value={Array.isArray(editProfile.preferred_subjects) ? editProfile.preferred_subjects.join(', ') : editProfile.preferred_subjects || ''}
-                                 onChange={(e) => setEditProfile(prev => ({ 
-                                   ...prev, 
-                                   preferred_subjects: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
-                                 }))}
-                                 placeholder="Enter subjects you prefer to teach separated by commas (e.g., Mathematics, English, Science)"
-                               />
-                             </div>
-                             <div>
-                               <Label htmlFor="certifications">Certifications</Label>
-                               <Textarea
-                                 id="certifications"
-                                 value={Array.isArray(editProfile.certifications) ? editProfile.certifications.join(', ') : editProfile.certifications || ''}
-                                 onChange={(e) => setEditProfile(prev => ({ 
-                                   ...prev, 
-                                   certifications: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
-                                 }))}
-                                 placeholder="Enter your certifications separated by commas"
-                               />
-                             </div>
+                              <div>
+                                <Label htmlFor="expertise">Areas of Expertise</Label>
+                                <MultiSelect
+                                  options={availableSubjects}
+                                  value={editProfile.expertise || []}
+                                  onChange={(value) => setEditProfile(prev => ({ ...prev, expertise: value }))}
+                                  placeholder="Select your areas of expertise..."
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="preferred_subjects">Preferred Teaching Subjects</Label>
+                                <MultiSelect
+                                  options={availableSubjects}
+                                  value={editProfile.preferred_subjects || []}
+                                  onChange={(value) => setEditProfile(prev => ({ ...prev, preferred_subjects: value }))}
+                                  placeholder="Select subjects you prefer to teach..."
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="specializations">Specializations</Label>
+                                <MultiSelect
+                                  options={['STEM', 'Languages', 'Arts', 'Sciences', 'Humanities', 'Business', 'Technology']}
+                                  value={editProfile.specializations || []}
+                                  onChange={(value) => setEditProfile(prev => ({ ...prev, specializations: value }))}
+                                  placeholder="Select your specializations..."
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="certifications">Certifications</Label>
+                                <Textarea
+                                  id="certifications"
+                                  value={Array.isArray(editProfile.certifications) ? editProfile.certifications.join(', ') : editProfile.certifications || ''}
+                                  onChange={(e) => setEditProfile(prev => ({ 
+                                    ...prev, 
+                                    certifications: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                                  }))}
+                                  placeholder="Enter your certifications separated by commas"
+                                />
+                              </div>
                            </div>
                           <div className="flex justify-end space-x-2 mt-6">
                             <Button variant="outline" onClick={() => setShowProfileEdit(false)}>
