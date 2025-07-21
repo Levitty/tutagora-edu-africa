@@ -65,7 +65,9 @@ export const TutorDashboard = () => {
     expertise: profile?.expertise || [],
     specializations: profile?.specializations || [],
     teaching_experience: profile?.teaching_experience || '',
-    education_background: profile?.education_background || ''
+    education_background: profile?.education_background || '',
+    preferred_subjects: profile?.preferred_subjects || [],
+    certifications: profile?.certifications || []
   });
 
   // Profile photo upload mutation
@@ -423,72 +425,122 @@ export const TutorDashboard = () => {
                             Edit Profile
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Edit Profile</DialogTitle>
-                          </DialogHeader>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="first_name">First Name</Label>
-                              <Input
-                                id="first_name"
-                                value={editProfile.first_name}
-                                onChange={(e) => setEditProfile(prev => ({ ...prev, first_name: e.target.value }))}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="last_name">Last Name</Label>
-                              <Input
-                                id="last_name"
-                                value={editProfile.last_name}
-                                onChange={(e) => setEditProfile(prev => ({ ...prev, last_name: e.target.value }))}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="phone">Phone</Label>
-                              <Input
-                                id="phone"
-                                value={editProfile.phone}
-                                onChange={(e) => setEditProfile(prev => ({ ...prev, phone: e.target.value }))}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="hourly_rate">Hourly Rate (KSh)</Label>
-                              <Input
-                                id="hourly_rate"
-                                type="number"
-                                value={editProfile.hourly_rate}
-                                onChange={(e) => setEditProfile(prev => ({ ...prev, hourly_rate: e.target.value }))}
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <Label htmlFor="bio">Bio</Label>
-                              <Textarea
-                                id="bio"
-                                value={editProfile.bio}
-                                onChange={(e) => setEditProfile(prev => ({ ...prev, bio: e.target.value }))}
-                                placeholder="Tell students about yourself..."
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <Label htmlFor="teaching_experience">Teaching Experience</Label>
-                              <Textarea
-                                id="teaching_experience"
-                                value={editProfile.teaching_experience}
-                                onChange={(e) => setEditProfile(prev => ({ ...prev, teaching_experience: e.target.value }))}
-                                placeholder="Describe your teaching experience..."
-                              />
-                            </div>
-                            <div className="col-span-2">
-                              <Label htmlFor="education_background">Education Background</Label>
-                              <Textarea
-                                id="education_background"
-                                value={editProfile.education_background}
-                                onChange={(e) => setEditProfile(prev => ({ ...prev, education_background: e.target.value }))}
-                                placeholder="Your educational qualifications..."
-                              />
-                            </div>
-                          </div>
+                         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                           <DialogHeader>
+                             <DialogTitle>Edit Profile</DialogTitle>
+                           </DialogHeader>
+                           <div className="space-y-4">
+                             <div className="grid grid-cols-2 gap-4">
+                               <div>
+                                 <Label htmlFor="first_name">First Name</Label>
+                                 <Input
+                                   id="first_name"
+                                   value={editProfile.first_name}
+                                   onChange={(e) => setEditProfile(prev => ({ ...prev, first_name: e.target.value }))}
+                                 />
+                               </div>
+                               <div>
+                                 <Label htmlFor="last_name">Last Name</Label>
+                                 <Input
+                                   id="last_name"
+                                   value={editProfile.last_name}
+                                   onChange={(e) => setEditProfile(prev => ({ ...prev, last_name: e.target.value }))}
+                                 />
+                               </div>
+                               <div>
+                                 <Label htmlFor="phone">Phone</Label>
+                                 <Input
+                                   id="phone"
+                                   value={editProfile.phone}
+                                   onChange={(e) => setEditProfile(prev => ({ ...prev, phone: e.target.value }))}
+                                 />
+                               </div>
+                               <div>
+                                 <Label htmlFor="hourly_rate">Hourly Rate (KSh)</Label>
+                                 <Input
+                                   id="hourly_rate"
+                                   type="number"
+                                   value={editProfile.hourly_rate}
+                                   onChange={(e) => setEditProfile(prev => ({ ...prev, hourly_rate: e.target.value }))}
+                                 />
+                               </div>
+                             </div>
+                             <div>
+                               <Label htmlFor="bio">Bio</Label>
+                               <Textarea
+                                 id="bio"
+                                 value={editProfile.bio}
+                                 onChange={(e) => setEditProfile(prev => ({ ...prev, bio: e.target.value }))}
+                                 placeholder="Tell students about yourself..."
+                               />
+                             </div>
+                             <div>
+                               <Label htmlFor="teaching_experience">Teaching Experience</Label>
+                               <Textarea
+                                 id="teaching_experience"
+                                 value={editProfile.teaching_experience}
+                                 onChange={(e) => setEditProfile(prev => ({ ...prev, teaching_experience: e.target.value }))}
+                                 placeholder="Describe your teaching experience..."
+                               />
+                             </div>
+                             <div>
+                               <Label htmlFor="education_background">Education Background</Label>
+                               <Textarea
+                                 id="education_background"
+                                 value={editProfile.education_background}
+                                 onChange={(e) => setEditProfile(prev => ({ ...prev, education_background: e.target.value }))}
+                                 placeholder="Your educational qualifications..."
+                               />
+                             </div>
+                             <div>
+                               <Label htmlFor="expertise">Areas of Expertise</Label>
+                               <Textarea
+                                 id="expertise"
+                                 value={Array.isArray(editProfile.expertise) ? editProfile.expertise.join(', ') : editProfile.expertise || ''}
+                                 onChange={(e) => setEditProfile(prev => ({ 
+                                   ...prev, 
+                                   expertise: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                                 }))}
+                                 placeholder="Enter your expertise areas separated by commas (e.g., Mathematics, Physics, Chemistry)"
+                               />
+                             </div>
+                             <div>
+                               <Label htmlFor="specializations">Specializations</Label>
+                               <Textarea
+                                 id="specializations"
+                                 value={Array.isArray(editProfile.specializations) ? editProfile.specializations.join(', ') : editProfile.specializations || ''}
+                                 onChange={(e) => setEditProfile(prev => ({ 
+                                   ...prev, 
+                                   specializations: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                                 }))}
+                                 placeholder="Enter your specializations separated by commas (e.g., STEM, Languages, Arts)"
+                               />
+                             </div>
+                             <div>
+                               <Label htmlFor="preferred_subjects">Preferred Teaching Subjects</Label>
+                               <Textarea
+                                 id="preferred_subjects"
+                                 value={Array.isArray(editProfile.preferred_subjects) ? editProfile.preferred_subjects.join(', ') : editProfile.preferred_subjects || ''}
+                                 onChange={(e) => setEditProfile(prev => ({ 
+                                   ...prev, 
+                                   preferred_subjects: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                                 }))}
+                                 placeholder="Enter subjects you prefer to teach separated by commas (e.g., Mathematics, English, Science)"
+                               />
+                             </div>
+                             <div>
+                               <Label htmlFor="certifications">Certifications</Label>
+                               <Textarea
+                                 id="certifications"
+                                 value={Array.isArray(editProfile.certifications) ? editProfile.certifications.join(', ') : editProfile.certifications || ''}
+                                 onChange={(e) => setEditProfile(prev => ({ 
+                                   ...prev, 
+                                   certifications: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                                 }))}
+                                 placeholder="Enter your certifications separated by commas"
+                               />
+                             </div>
+                           </div>
                           <div className="flex justify-end space-x-2 mt-6">
                             <Button variant="outline" onClick={() => setShowProfileEdit(false)}>
                               Cancel
