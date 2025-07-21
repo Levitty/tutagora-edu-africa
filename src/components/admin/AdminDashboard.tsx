@@ -300,6 +300,9 @@ export const AdminDashboard = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
+                          <Badge variant="outline" className="text-orange-600 border-orange-600">
+                            {doc.status || 'pending'}
+                          </Badge>
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button 
@@ -308,7 +311,7 @@ export const AdminDashboard = () => {
                                 onClick={() => setSelectedDocument(doc)}
                               >
                                 <Eye className="h-4 w-4 mr-1" />
-                                Review
+                                View & Approve
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-4xl">
