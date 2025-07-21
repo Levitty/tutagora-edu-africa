@@ -37,13 +37,8 @@ const Index = () => {
     console.log('getDashboardRoute - isTutor:', isTutor);
     console.log('getDashboardRoute - isStudent:', isStudent);
     
-    if (isSuperAdmin) {
-      return "/super-admin-dashboard";
-    }
-    if (isTutor) {
-      return "/tutor-dashboard";
-    }
-    return "/student-dashboard";
+    // For role-based routing, use the generic dashboard route that handles redirects
+    return "/dashboard";
   };
 
   return (

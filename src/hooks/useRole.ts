@@ -40,22 +40,22 @@ export const useRole = () => {
 }
 
 export const useIsSuperAdmin = () => {
-  const { data: role } = useRole()
-  const isSuperAdmin = role === 'super_admin'
-  console.log('useIsSuperAdmin - role:', role, 'isSuperAdmin:', isSuperAdmin);
+  const { data: role, isLoading } = useRole()
+  const isSuperAdmin = !isLoading && role === 'super_admin'
+  console.log('useIsSuperAdmin - role:', role, 'isSuperAdmin:', isSuperAdmin, 'isLoading:', isLoading);
   return isSuperAdmin
 }
 
 export const useIsTutor = () => {
-  const { data: role } = useRole()
-  const isTutor = role === 'tutor'
-  console.log('useIsTutor - role:', role, 'isTutor:', isTutor);
+  const { data: role, isLoading } = useRole()
+  const isTutor = !isLoading && role === 'tutor'
+  console.log('useIsTutor - role:', role, 'isTutor:', isTutor, 'isLoading:', isLoading);
   return isTutor
 }
 
 export const useIsStudent = () => {
-  const { data: role } = useRole()
-  const isStudent = role === 'student'
-  console.log('useIsStudent - role:', role, 'isStudent:', isStudent);
+  const { data: role, isLoading } = useRole()
+  const isStudent = !isLoading && (role === 'student' || (!role && !isLoading))
+  console.log('useIsStudent - role:', role, 'isStudent:', isStudent, 'isLoading:', isLoading);
   return isStudent
 }
