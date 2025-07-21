@@ -80,12 +80,12 @@ export const TutorDashboard = () => {
         bio: profile.bio || '',
         hourly_rate: profile.hourly_rate?.toString() || '',
         phone: profile.phone || '',
-        expertise: profile.expertise || [],
-        specializations: profile.specializations || [],
+        expertise: Array.isArray(profile.expertise) ? profile.expertise : [],
+        specializations: Array.isArray(profile.specializations) ? profile.specializations : [],
         teaching_experience: profile.teaching_experience || '',
         education_background: profile.education_background || '',
-        preferred_subjects: profile.preferred_subjects || [],
-        certifications: profile.certifications || []
+        preferred_subjects: Array.isArray(profile.preferred_subjects) ? profile.preferred_subjects : [],
+        certifications: Array.isArray(profile.certifications) ? profile.certifications : []
       });
     }
   }, [profile]);
@@ -221,11 +221,32 @@ export const TutorDashboard = () => {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Available subjects for selection
-  const availableSubjects = [
-    'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Geography', 
-    'History', 'Economics', 'Business Studies', 'Computer Science', 'Programming',
-    'French', 'German', 'Spanish', 'Kiswahili', 'Art', 'Music', 'Physical Education',
-    'Psychology', 'Philosophy', 'Statistics', 'Accounting', 'Government', 'Literature'
+  const subjectOptions = [
+    'Mathematics',
+    'English', 
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'Computer Science',
+    'Programming',
+    'ACCA',
+    'Business Studies',
+    'Economics',
+    'History',
+    'Geography',
+    'Literature',
+    'Art',
+    'Music',
+    'French',
+    'Spanish',
+    'German',
+    'Kiswahili',
+    'Psychology',
+    'Philosophy',
+    'Statistics',
+    'Accounting',
+    'Government',
+    'Physical Education'
   ];
 
   if (!isKycApproved) {
@@ -520,24 +541,24 @@ export const TutorDashboard = () => {
                                  placeholder="Your educational qualifications..."
                                />
                              </div>
-                              <div>
-                                <Label htmlFor="expertise">Areas of Expertise</Label>
-                                <MultiSelect
-                                  options={availableSubjects}
-                                  value={editProfile.expertise || []}
-                                  onChange={(value) => setEditProfile(prev => ({ ...prev, expertise: value }))}
-                                  placeholder="Select your areas of expertise..."
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="preferred_subjects">Preferred Teaching Subjects</Label>
-                                <MultiSelect
-                                  options={availableSubjects}
-                                  value={editProfile.preferred_subjects || []}
-                                  onChange={(value) => setEditProfile(prev => ({ ...prev, preferred_subjects: value }))}
-                                  placeholder="Select subjects you prefer to teach..."
-                                />
-                              </div>
+                               <div>
+                                 <Label htmlFor="expertise">Areas of Expertise</Label>
+                                 <MultiSelect
+                                   options={subjectOptions}
+                                   value={editProfile.expertise || []}
+                                   onChange={(value) => setEditProfile(prev => ({ ...prev, expertise: value }))}
+                                   placeholder="Select your areas of expertise..."
+                                 />
+                               </div>
+                               <div>
+                                 <Label htmlFor="preferred_subjects">Preferred Teaching Subjects</Label>
+                                 <MultiSelect
+                                   options={subjectOptions}
+                                   value={editProfile.preferred_subjects || []}
+                                   onChange={(value) => setEditProfile(prev => ({ ...prev, preferred_subjects: value }))}
+                                   placeholder="Select subjects you prefer to teach..."
+                                 />
+                               </div>
                               <div>
                                 <Label htmlFor="specializations">Specializations</Label>
                                 <MultiSelect
