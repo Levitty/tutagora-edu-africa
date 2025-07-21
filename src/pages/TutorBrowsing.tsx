@@ -22,7 +22,7 @@ const TutorBrowsing = () => {
   const navigate = useNavigate();
 
   // Fetch verified tutors from database
-  const { data: tutors = [], isLoading, refetch } = useQuery({
+  const { data: tutors = [], isLoading } = useQuery({
     queryKey: ['verified-tutors'],
     queryFn: async () => {
       console.log('Fetching verified tutors...');
@@ -31,6 +31,7 @@ const TutorBrowsing = () => {
         .select('*')
         .eq('role', 'tutor')
         .eq('kyc_status', 'approved')
+        .not('hourly_rate', 'is', null)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -41,11 +42,6 @@ const TutorBrowsing = () => {
       return data || [];
     }
   });
-
-  // Force refetch when component mounts
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
 
   const subjects = [
     { id: "all", name: "All Subjects" },
