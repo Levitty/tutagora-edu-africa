@@ -20,6 +20,9 @@ import Certification from "./pages/Certification";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import CourseCreation from "./pages/CourseCreation";
+import BookTutor from "./pages/BookTutor";
+import PaymentCallback from "./pages/PaymentCallback";
+import MyBookings from "./pages/MyBookings";
 import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
@@ -40,6 +43,9 @@ const App = () => (
             <Route path="/super-admin-dashboard" element={<SuperAdminDashboard />} />
             <Route path="/course-dashboard" element={<CourseDashboard />} />
             <Route path="/browse-tutors" element={<TutorBrowsing />} />
+            <Route path="/book-tutor/:tutorId" element={<BookTutor />} />
+            <Route path="/payment-callback" element={<PaymentCallback />} />
+            <Route path="/my-bookings" element={<MyBookings />} />
             <Route path="/tutor-profile/:tutorId" element={<TutorProfile />} />
             <Route path="/live-tutoring/:sessionId" element={<LiveTutoring />} />
             <Route path="/ai-learning" element={<AILearning />} />

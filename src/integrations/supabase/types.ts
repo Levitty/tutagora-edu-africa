@@ -104,6 +104,63 @@ export type Database = {
         }
         Relationships: []
       }
+      bookings: {
+        Row: {
+          created_at: string
+          duration_minutes: number
+          hourly_rate: number
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_status: string
+          pesapal_merchant_reference: string | null
+          pesapal_tracking_id: string | null
+          scheduled_at: string
+          status: string
+          student_id: string
+          subject: string
+          total_amount: number
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number
+          hourly_rate: number
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          pesapal_merchant_reference?: string | null
+          pesapal_tracking_id?: string | null
+          scheduled_at: string
+          status?: string
+          student_id: string
+          subject: string
+          total_amount: number
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number
+          hourly_rate?: number
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          pesapal_merchant_reference?: string | null
+          pesapal_tracking_id?: string | null
+          scheduled_at?: string
+          status?: string
+          student_id?: string
+          subject?: string
+          total_amount?: number
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       course_videos: {
         Row: {
           course_id: string
@@ -367,6 +424,56 @@ export type Database = {
           },
         ]
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          currency: string | null
+          id: string
+          payment_method: string | null
+          pesapal_merchant_reference: string | null
+          pesapal_tracking_id: string | null
+          status: string
+          transaction_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          payment_method?: string | null
+          pesapal_merchant_reference?: string | null
+          pesapal_tracking_id?: string | null
+          status?: string
+          transaction_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          payment_method?: string | null
+          pesapal_merchant_reference?: string | null
+          pesapal_tracking_id?: string | null
+          status?: string
+          transaction_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           available_hours: Json | null
@@ -442,6 +549,36 @@ export type Database = {
           teaching_experience?: string | null
           updated_at?: string
           user_type?: string | null
+        }
+        Relationships: []
+      }
+      tutor_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean | null
+          start_time: string
+          tutor_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          start_time: string
+          tutor_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          start_time?: string
+          tutor_id?: string
         }
         Relationships: []
       }
