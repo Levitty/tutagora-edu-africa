@@ -38,6 +38,7 @@ export function MultiSelect({ options, value, onChange, placeholder = "Select it
             role="combobox"
             aria-expanded={open}
             className="w-full justify-between text-left font-normal"
+            type="button"
           >
             {value.length === 0 ? (
               <span className="text-muted-foreground">{placeholder}</span>
@@ -48,7 +49,7 @@ export function MultiSelect({ options, value, onChange, placeholder = "Select it
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-[400px] p-0" align="start">
           <Command>
             <CommandInput placeholder="Search..." />
             <CommandEmpty>No items found.</CommandEmpty>

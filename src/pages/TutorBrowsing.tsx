@@ -53,21 +53,27 @@ const TutorBrowsing = () => {
     { id: "programming", name: "Programming" }
   ];
 
-  // Filter tutors based on search and subject - show all approved tutors
+  // Filter tutors based on search and subject - show all approved tutors with hourly rate
   const filteredTutors = tutors.filter(tutor => {
     const fullName = `${tutor.first_name} ${tutor.last_name}`.toLowerCase();
-    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) ||
-                         (tutor.expertise || []).some((subject: string) => 
+    const matchesSearch = searchQuery === "" || 
+                         fullName.includes(searchQuery.toLowerCase()) ||
+                         (tutor.expertise && tutor.expertise.length > 0 && tutor.expertise.some((subject: string) => 
                            subject.toLowerCase().includes(searchQuery.toLowerCase())
-                         );
-    // Show all approved tutors under all subjects unless searching specifically
+                         ));
+    
+    // For subject filtering: if "all" is selected, show all tutors
+    // If specific subject is selected, check if tutor has that expertise/subject OR if they have no subjects set (show all approved tutors)
     const matchesSubject = selectedSubject === "all" || 
-                          (tutor.expertise || []).some((subject: string) => 
+                          (tutor.expertise && tutor.expertise.length > 0 && tutor.expertise.some((subject: string) => 
                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
-                          ) ||
-                          (tutor.preferred_subjects || []).some((subject: string) => 
+                          )) ||
+                          (tutor.preferred_subjects && tutor.preferred_subjects.length > 0 && tutor.preferred_subjects.some((subject: string) => 
                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
-                          );
+                          )) ||
+                          // Show tutors with no subjects set (they can teach anything)
+                          (!tutor.expertise || tutor.expertise.length === 0) && (!tutor.preferred_subjects || tutor.preferred_subjects.length === 0);
+    
     return matchesSearch && matchesSubject;
   });
 
