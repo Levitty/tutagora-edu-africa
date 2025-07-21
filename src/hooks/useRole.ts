@@ -25,7 +25,8 @@ export const useRole = () => {
       
       if (error) {
         console.error('Error fetching user role:', error);
-        // Don't throw, return default role instead
+        // Return student as fallback
+        console.log('Returning student as fallback role');
         return 'student';
       }
       
@@ -35,10 +36,11 @@ export const useRole = () => {
       return role;
     },
     enabled: !!user?.id,
-    staleTime: 0, // Always refetch to get latest role
-    gcTime: 0, // Don't cache the result (replaces cacheTime)
-    refetchOnMount: true, // Always refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window gains focus
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: 3,
   })
 }
 
