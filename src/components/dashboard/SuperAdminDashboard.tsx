@@ -7,9 +7,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Users, DollarSign, TrendingUp, Settings, Eye, UserCheck, AlertTriangle, Search, FileText, GraduationCap } from "lucide-react";
-import { useQuery } from '@tanstack/react-query';
+import { Textarea } from "@/components/ui/textarea";
+import { BookOpen, Users, DollarSign, TrendingUp, Settings, Eye, UserCheck, AlertTriangle, Search, FileText, GraduationCap, CheckCircle, XCircle } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 type KycDocumentWithProfile = {
   id: string;
@@ -32,6 +34,9 @@ export const SuperAdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDocument, setSelectedDocument] = useState<KycDocumentWithProfile | null>(null);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch analytics data
   const { data: analytics } = useQuery({
@@ -120,6 +125,64 @@ export const SuperAdminDashboard = () => {
       return data;
     }
   });
+
+  // Mutation for approving/rejecting KYC
+  const updateKycMutation = useMutation({
+    mutationFn: async ({ documentId, status, notes }: { documentId: string; status: string; notes: string }) => {
+      const { error } = await supabase
+        .from('kyc_documents')
+        .update({ 
+          status, 
+          notes,
+          reviewed_at: new Date().toISOString()
+        })
+        .eq('id', documentId);
+      
+      if (error) throw error;
+
+      // Update profile KYC status if all documents are approved
+      if (status === 'approved') {
+        const { data: tutorDocs } = await supabase
+          .from('kyc_documents')
+          .select('status, tutor_id')
+          .eq('id', documentId)
+          .single();
+
+        if (tutorDocs) {
+          const { data: allDocs } = await supabase
+            .from('kyc_documents')
+            .select('status')
+            .eq('tutor_id', tutorDocs.tutor_id);
+
+          const allApproved = allDocs?.every(doc => doc.status === 'approved');
+          
+          if (allApproved) {
+            await supabase
+              .from('profiles')
+              .update({ kyc_status: 'approved' })
+              .eq('id', tutorDocs.tutor_id);
+          }
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-kyc-documents'] });
+      queryClient.invalidateQueries({ queryKey: ['all-profiles'] });
+      toast({ title: "KYC document reviewed successfully" });
+      setSelectedDocument(null);
+      setReviewNotes("");
+    },
+  });
+
+  const handleKycAction = (status: 'approved' | 'rejected') => {
+    if (!selectedDocument) return;
+    
+    updateKycMutation.mutate({
+      documentId: selectedDocument.id,
+      status,
+      notes: reviewNotes
+    });
+  };
 
   const totalUsers = allProfiles?.length || 0;
   const totalTutors = allProfiles?.filter(p => p.role === 'tutor').length || 0;
@@ -422,6 +485,34 @@ export const SuperAdminDashboard = () => {
                                       <strong>Notes:</strong> {doc.notes}
                                     </div>
                                   )}
+                                </div>
+
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium">Review Notes:</label>
+                                  <Textarea
+                                    placeholder="Add notes about this verification..."
+                                    value={reviewNotes}
+                                    onChange={(e) => setReviewNotes(e.target.value)}
+                                  />
+                                </div>
+
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    onClick={() => handleKycAction('approved')}
+                                    disabled={updateKycMutation.isPending}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Approve
+                                  </Button>
+                                  <Button 
+                                    onClick={() => handleKycAction('rejected')}
+                                    disabled={updateKycMutation.isPending}
+                                    variant="destructive"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Reject
+                                  </Button>
                                 </div>
                               </div>
                             </DialogContent>
