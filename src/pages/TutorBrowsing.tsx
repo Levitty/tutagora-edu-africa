@@ -63,10 +63,12 @@ const TutorBrowsing = () => {
                          fullName.includes(searchQuery.toLowerCase()) ||
                          (tutor.expertise && Array.isArray(tutor.expertise) && tutor.expertise.some((subject: string) => 
                            subject.toLowerCase().includes(searchQuery.toLowerCase())
+                         )) ||
+                         (tutor.preferred_subjects && Array.isArray(tutor.preferred_subjects) && tutor.preferred_subjects.some((subject: string) => 
+                           subject.toLowerCase().includes(searchQuery.toLowerCase())
                          ));
     
     // For subject filtering: if "all" is selected, show all approved tutors
-    // If specific subject is selected, check if tutor has that expertise/subject
     const matchesSubject = selectedSubject === "all" || 
                           (tutor.expertise && Array.isArray(tutor.expertise) && tutor.expertise.some((subject: string) => 
                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
