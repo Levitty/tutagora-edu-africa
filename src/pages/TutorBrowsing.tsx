@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,14 +10,32 @@ import { Search, Filter, Star, Users, Clock, Video, Calendar as CalendarIcon, Bo
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const TutorBrowsing = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedTutor, setSelectedTutor] = useState<number | null>(null);
+  const [selectedTutor, setSelectedTutor] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch verified tutors from database
+  const { data: tutors = [], isLoading } = useQuery({
+    queryKey: ['verified-tutors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'tutor')
+        .eq('kyc_status', 'approved')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
 
   const subjects = [
     { id: "all", name: "All Subjects" },
@@ -29,150 +47,47 @@ const TutorBrowsing = () => {
     { id: "programming", name: "Programming" }
   ];
 
-  const tutors = [
-    {
-      id: 1,
-      name: "Dr. Amina Ochieng",
-      subjects: ["Mathematics", "Physics"],
-      rating: 4.9,
-      totalReviews: 156,
-      students: 245,
-      experience: "8 years",
-      price: "KSh 800/hour",
-      languages: ["English", "Swahili"],
-      university: "University of Nairobi",
-      description: "Experienced mathematics and physics tutor specializing in KCSE preparation.",
-      avatar: "/api/placeholder/150/150",
-      hasIntroVideo: true,
-      availability: {
-        "2024-12-02": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
-        "2024-12-03": ["10:00 AM", "1:00 PM", "3:00 PM", "5:00 PM"],
-        "2024-12-04": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "7:00 PM"],
-        "2024-12-05": ["8:00 AM", "10:00 AM", "3:00 PM", "5:00 PM"],
-        "2024-12-06": ["9:00 AM", "1:00 PM", "4:00 PM", "6:00 PM"]
-      },
-      nextAvailable: "Today at 2:00 PM"
-    },
-    {
-      id: 2,
-      name: "Prof. Kwame Asante",
-      subjects: ["Physics", "Chemistry"],
-      rating: 4.8,
-      totalReviews: 132,
-      students: 189,
-      experience: "12 years",
-      price: "KSh 1000/hour",
-      languages: ["English", "Twi"],
-      university: "University of Ghana",
-      description: "Physics professor with expertise in university-level concepts and JAMB preparation.",
-      avatar: "/api/placeholder/150/150",
-      hasIntroVideo: false,
-      availability: {
-        "2024-12-02": ["8:00 AM", "10:00 AM", "3:00 PM", "5:00 PM"],
-        "2024-12-03": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
-        "2024-12-04": ["10:00 AM", "1:00 PM", "4:00 PM"],
-        "2024-12-05": ["8:00 AM", "12:00 PM", "3:00 PM", "5:00 PM"],
-        "2024-12-06": ["9:00 AM", "2:00 PM", "5:00 PM", "7:00 PM"]
-      },
-      nextAvailable: "Tomorrow at 9:00 AM"
-    },
-    {
-      id: 3,
-      name: "Dr. Fatima Ibrahim",
-      subjects: ["Chemistry", "Biology"],
-      rating: 4.7,
-      totalReviews: 98,
-      students: 156,
-      experience: "6 years",
-      price: "KSh 750/hour",
-      languages: ["English", "Arabic", "Hausa"],
-      university: "Ahmadu Bello University",
-      description: "Chemistry and biology expert with focus on medical school preparation.",
-      avatar: "/api/placeholder/150/150",
-      hasIntroVideo: true,
-      availability: {
-        "2024-12-02": ["11:00 AM", "1:00 PM", "4:00 PM", "6:00 PM"],
-        "2024-12-03": ["9:00 AM", "3:00 PM", "5:00 PM", "7:00 PM"],
-        "2024-12-04": ["8:00 AM", "12:00 PM", "2:00 PM", "5:00 PM"],
-        "2024-12-05": ["10:00 AM", "1:00 PM", "4:00 PM"],
-        "2024-12-06": ["9:00 AM", "11:00 AM", "3:00 PM", "6:00 PM"]
-      },
-      nextAvailable: "Today at 4:00 PM"
-    },
-    {
-      id: 4,
-      name: "Ms. Grace Wanjiku",
-      subjects: ["English", "Literature"],
-      rating: 4.6,
-      students: 134,
-      experience: "5 years",
-      price: "KSh 600/hour",
-      languages: ["English", "Swahili", "Kikuyu"],
-      university: "Kenyatta University",
-      description: "English literature specialist with expertise in KCSE set books and creative writing.",
-      avatar: "/api/placeholder/150/150",
-      availability: {
-        "2024-12-02": ["10:00 AM", "2:00 PM", "5:00 PM"],
-        "2024-12-03": ["8:00 AM", "12:00 PM", "4:00 PM"],
-        "2024-12-04": ["9:00 AM", "1:00 PM", "3:00 PM"]
-      },
-      nextAvailable: "Today at 5:00 PM"
-    },
-    {
-      id: 5,
-      name: "John Mwangi",
-      subjects: ["Programming", "Web Development"],
-      rating: 4.5,
-      students: 98,
-      experience: "4 years",
-      price: "KSh 900/hour",
-      languages: ["English", "Swahili"],
-      university: "Technical University of Kenya",
-      description: "Full-stack developer teaching modern web development and programming fundamentals.",
-      avatar: "/api/placeholder/150/150",
-      availability: {
-        "2024-12-02": ["9:00 AM", "3:00 PM", "6:00 PM"],
-        "2024-12-03": ["10:00 AM", "1:00 PM", "5:00 PM"],
-        "2024-12-04": ["11:00 AM", "2:00 PM", "4:00 PM"]
-      },
-      nextAvailable: "Tomorrow at 10:00 AM"
-    }
-  ];
-
+  // Filter tutors based on search and subject
   const filteredTutors = tutors.filter(tutor => {
-    const matchesSearch = tutor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         tutor.subjects.some(subject => 
+    const fullName = `${tutor.first_name} ${tutor.last_name}`.toLowerCase();
+    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) ||
+                         (tutor.expertise || []).some((subject: string) => 
                            subject.toLowerCase().includes(searchQuery.toLowerCase())
                          );
     const matchesSubject = selectedSubject === "all" || 
-                          tutor.subjects.some(subject => 
+                          (tutor.expertise || []).some((subject: string) => 
                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
                           );
     return matchesSearch && matchesSubject;
   });
 
-  const getAvailabilityForDate = (tutorId: number, date: Date) => {
-    const tutor = tutors.find(t => t.id === tutorId);
-    const dateStr = date.toISOString().split('T')[0];
-    return tutor?.availability[dateStr] || [];
-  };
-
-  const handleBookSession = (tutorId: number, time: string) => {
+  const handleBookSession = (tutorId: string) => {
     if (!user) {
       toast.error("Please sign in to book a session");
       navigate("/auth");
       return;
     }
-    navigate(`/live-tutoring/tutor-${tutorId}`);
+    navigate(`/book-tutor?tutor=${tutorId}`);
   };
 
-  const handleViewProfile = (tutorId: number) => {
+  const handleViewProfile = (tutorId: string) => {
     navigate(`/tutor-profile/${tutorId}`);
   };
 
-  const handleViewCalendar = (tutorId: number) => {
+  const handleViewCalendar = (tutorId: string) => {
     setSelectedTutor(selectedTutor === tutorId ? null : tutorId);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading verified tutors...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -251,158 +166,116 @@ const TutorBrowsing = () => {
           {/* Tutors List */}
           <div className="lg:col-span-3">
             <div className="space-y-6">
-              {filteredTutors.map((tutor) => (
-                <Card key={tutor.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      {/* Tutor Info */}
-                      <div className="flex-1">
-                        <div className="flex items-start gap-4">
-                          <div 
-                            className="cursor-pointer"
-                            onClick={() => handleViewProfile(tutor.id)}
-                          >
-                            <Avatar className="h-20 w-20 hover:ring-2 hover:ring-blue-500 transition-all">
-                              <AvatarFallback>
-                                {tutor.name.split(' ').map(n => n[0]).join('')}
-                              </AvatarFallback>
-                            </Avatar>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <div>
-                                <h3 
-                                  className="text-xl font-bold hover:text-blue-600 cursor-pointer transition-colors"
-                                  onClick={() => handleViewProfile(tutor.id)}
-                                >
-                                  {tutor.name}
-                                </h3>
-                                {tutor.hasIntroVideo && (
-                                  <div className="flex items-center gap-1 text-sm text-blue-600 mt-1">
-                                    <Play className="h-3 w-3" />
-                                    <span>Intro video available</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center">
-                                <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                                <span className="font-medium">{tutor.rating}</span>
-                                <span className="text-gray-600 ml-1">({tutor.totalReviews} reviews)</span>
-                              </div>
+              {filteredTutors.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No tutors found</h3>
+                  <p className="text-gray-600">Try adjusting your search criteria or browse all subjects</p>
+                </div>
+              ) : (
+                filteredTutors.map((tutor) => (
+                  <Card key={tutor.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col md:flex-row gap-6">
+                        {/* Tutor Info */}
+                        <div className="flex-1">
+                          <div className="flex items-start gap-4">
+                            <div 
+                              className="cursor-pointer"
+                              onClick={() => handleViewProfile(tutor.id)}
+                            >
+                              <Avatar className="h-20 w-20 hover:ring-2 hover:ring-blue-500 transition-all">
+                                <AvatarImage src={tutor.profile_photo_url} />
+                                <AvatarFallback>
+                                  {tutor.first_name?.[0]}{tutor.last_name?.[0]}
+                                </AvatarFallback>
+                              </Avatar>
                             </div>
-                            
-                            <div className="space-y-2 mb-4">
-                              <div className="flex flex-wrap gap-2">
-                                {tutor.subjects.map((subject, index) => (
-                                  <Badge key={index} variant="secondary">{subject}</Badge>
-                                ))}
-                              </div>
-                              
-                              <div className="flex items-center gap-4 text-sm text-gray-600">
-                                <span>{tutor.experience} experience</span>
-                                <span>•</span>
-                                <span>{tutor.university}</span>
-                                <span>•</span>
-                                <span className="font-semibold text-blue-600">{tutor.price}</span>
-                              </div>
-                              
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-600">Languages:</span>
-                                {tutor.languages.map((lang, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs">
-                                    {lang}
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <h3 
+                                    className="text-xl font-bold hover:text-blue-600 cursor-pointer transition-colors"
+                                    onClick={() => handleViewProfile(tutor.id)}
+                                  >
+                                    {tutor.first_name} {tutor.last_name}
+                                  </h3>
+                                  <Badge variant="secondary" className="mt-1">
+                                    Verified Tutor
                                   </Badge>
-                                ))}
-                              </div>
-                            </div>
-
-                            <p className="text-gray-700 mb-4">{tutor.description}</p>
-                            
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center text-sm text-green-600">
-                                <Clock className="h-4 w-4 mr-1" />
-                                Next available: {tutor.nextAvailable}
+                                </div>
+                                <div className="flex items-center">
+                                  <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                                  <span className="font-medium">4.8</span>
+                                  <span className="text-gray-600 ml-1">(25+ reviews)</span>
+                                </div>
                               </div>
                               
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleViewProfile(tutor.id)}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Profile
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleViewCalendar(tutor.id)}
-                                >
-                                  <CalendarIcon className="h-4 w-4 mr-2" />
-                                  {selectedTutor === tutor.id ? 'Hide Calendar' : 'View Calendar'}
-                                </Button>
-                                <Button 
-                                  size="sm"
-                                  onClick={() => handleBookSession(tutor.id, tutor.nextAvailable)}
-                                >
-                                  <Video className="h-4 w-4 mr-2" />
-                                  Book Now
-                                </Button>
+                              <div className="space-y-2 mb-4">
+                                <div className="flex flex-wrap gap-2">
+                                  {(tutor.expertise || []).map((subject, index) => (
+                                    <Badge key={index} variant="secondary">{subject}</Badge>
+                                  ))}
+                                </div>
+                                
+                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                  <span>{tutor.teaching_experience || "Experienced tutor"}</span>
+                                  {tutor.education_background && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{tutor.education_background}</span>
+                                    </>
+                                  )}
+                                  {tutor.hourly_rate && (
+                                    <>
+                                      <span>•</span>
+                                      <span className="font-semibold text-blue-600">KSh {tutor.hourly_rate}/hour</span>
+                                    </>
+                                  )}
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-gray-600">Country:</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {tutor.country || "Kenya"}
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              <p className="text-gray-700 mb-4">{tutor.bio || "Experienced tutor ready to help you achieve your academic goals."}</p>
+                              
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center text-sm text-green-600">
+                                  <Clock className="h-4 w-4 mr-1" />
+                                  Available for booking
+                                </div>
+                                
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleViewProfile(tutor.id)}
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Profile
+                                  </Button>
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => handleBookSession(tutor.id)}
+                                  >
+                                    <Video className="h-4 w-4 mr-2" />
+                                    Book Session
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-
-                        {/* Enhanced Calendar View */}
-                        {selectedTutor === tutor.id && (
-                          <div className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border">
-                            <h4 className="font-semibold mb-4 text-lg">Available Time Slots</h4>
-                            <div className="grid md:grid-cols-2 gap-6">
-                              <div>
-                                <Calendar
-                                  mode="single"
-                                  selected={selectedDate}
-                                  onSelect={setSelectedDate}
-                                  className="rounded-md border bg-white"
-                                />
-                              </div>
-                              
-                              {selectedDate && (
-                                <div>
-                                  <h5 className="font-medium mb-3 text-gray-900">
-                                    Available slots for {selectedDate.toDateString()}
-                                  </h5>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {getAvailabilityForDate(tutor.id, selectedDate).map((time, index) => (
-                                      <Button
-                                        key={index}
-                                        variant="outline"
-                                        size="sm"
-                                        className="justify-start hover:bg-blue-100 hover:border-blue-300"
-                                        onClick={() => handleBookSession(tutor.id, time)}
-                                      >
-                                        <Clock className="h-4 w-4 mr-2" />
-                                        {time}
-                                      </Button>
-                                    ))}
-                                  </div>
-                                  {getAvailabilityForDate(tutor.id, selectedDate).length === 0 && (
-                                    <div className="text-center py-8">
-                                      <Clock className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-                                      <p className="text-gray-600">No available slots for this date</p>
-                                      <p className="text-sm text-gray-500 mt-1">Try selecting another date</p>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </div>
 

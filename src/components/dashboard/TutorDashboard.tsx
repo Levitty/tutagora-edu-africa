@@ -4,56 +4,108 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Calendar, Users, Video, Award, Settings, AlertTriangle, CheckCircle, Upload, DollarSign, Star, TrendingUp } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { BookOpen, Calendar, Users, Video, Award, Settings, AlertTriangle, CheckCircle, Upload, DollarSign, Star, TrendingUp, Camera, Clock, Phone, Mail, MapPin, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProfile } from "@/hooks/useProfile";
+import { useBookings } from "@/hooks/useBookings";
+import { useTutorAvailability } from "@/hooks/useTutorAvailability";
 import { TutorOnboarding } from "@/components/tutor/TutorOnboarding";
 import VideoUpload from "@/components/tutor/VideoUpload";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const TutorDashboard = () => {
-  const { data: profile } = useProfile();
+  const { data: profile, refetch: refetchProfile } = useProfile();
+  const { data: bookings } = useBookings();
+  const { data: availability } = useTutorAvailability();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const kycStatus = profile?.kyc_status || 'pending';
   const isKycApproved = kycStatus === 'approved';
   const [showKYC, setShowKYC] = useState(false);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [showAvailability, setShowAvailability] = useState(false);
+  
+  // Profile editing state
+  const [editProfile, setEditProfile] = useState({
+    first_name: profile?.first_name || '',
+    last_name: profile?.last_name || '',
+    bio: profile?.bio || '',
+    hourly_rate: profile?.hourly_rate || '',
+    phone: profile?.phone || '',
+    expertise: profile?.expertise || [],
+    specializations: profile?.specializations || [],
+    teaching_experience: profile?.teaching_experience || '',
+    education_background: profile?.education_background || ''
+  });
 
-  const upcomingSessions = [
-    { 
-      id: 1, 
-      student: "John Kamau", 
-      subject: "Mathematics", 
-      time: "2:00 PM", 
-      type: "1-on-1", 
-      earnings: 500,
-      status: "confirmed"
+  // Profile photo upload mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async (updates: any) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', profile?.id);
+      
+      if (error) throw error;
     },
-    { 
-      id: 2, 
-      student: "Sarah Oduya", 
-      subject: "Physics", 
-      time: "4:00 PM", 
-      type: "Group", 
-      earnings: 300,
-      status: "pending"
+    onSuccess: () => {
+      toast({ title: "Profile updated successfully!" });
+      refetchProfile();
+      setShowProfileEdit(false);
     },
-    { 
-      id: 3, 
-      student: "Ahmed Hassan", 
-      subject: "Chemistry", 
-      time: "6:00 PM", 
-      type: "1-on-1", 
-      earnings: 600,
-      status: "confirmed"
+    onError: (error) => {
+      toast({ title: "Error updating profile", description: error.message, variant: "destructive" });
     }
-  ];
+  });
+
+  const handleProfilePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !profile?.id) return;
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${profile.id}/avatar.${fileExt}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(fileName);
+
+      await updateProfileMutation.mutateAsync({ profile_photo_url: urlData.publicUrl });
+    } catch (error: any) {
+      toast({ title: "Error uploading photo", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const tutorBookings = bookings?.filter(booking => booking.tutor_id === profile?.id) || [];
+  const todaysBookings = tutorBookings.filter(booking => {
+    const today = new Date().toDateString();
+    return new Date(booking.scheduled_at).toDateString() === today;
+  });
 
   const monthlyStats = {
-    totalEarnings: 45750,
-    pendingPayouts: 12500,
-    completedSessions: 28,
-    newStudents: 12,
-    averageRating: 4.8,
-    totalStudents: 105,
-    activeCourses: 8,
+    totalEarnings: tutorBookings
+      .filter(b => b.payment_status === 'completed')
+      .reduce((sum, b) => sum + Number(b.total_amount), 0),
+    pendingPayouts: tutorBookings
+      .filter(b => b.payment_status === 'pending')
+      .reduce((sum, b) => sum + Number(b.total_amount), 0),
+    completedSessions: tutorBookings.filter(b => b.status === 'completed').length,
+    totalStudents: new Set(tutorBookings.map(b => b.student_id)).size,
+    averageRating: 4.8, // TODO: Calculate from actual ratings
+    activeCourses: 0, // TODO: Get from courses
     responseTime: "2.3 min"
   };
 
@@ -200,38 +252,170 @@ export const TutorDashboard = () => {
                         Today's Sessions
                       </span>
                       <span className="text-sm text-gray-500">
-                        Total: KSh {upcomingSessions.reduce((sum, session) => sum + session.earnings, 0)}
+                        Total: KSh {todaysBookings.reduce((sum, booking) => sum + Number(booking.total_amount), 0)}
                       </span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {upcomingSessions.map((session) => (
-                      <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <Avatar>
-                            <AvatarFallback>{session.student.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold">{session.student}</h3>
-                            <p className="text-gray-600 text-sm">{session.subject} • {session.type}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">{session.time}</p>
-                          <p className="text-green-600 text-sm">KSh {session.earnings}</p>
-                          <Badge 
-                            variant={session.status === 'confirmed' ? 'default' : 'secondary'}
-                            className="mt-1"
-                          >
-                            {session.status}
-                          </Badge>
-                        </div>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                          <Video className="h-4 w-4 mr-2" />
-                          Start
-                        </Button>
+                    {todaysBookings.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>No sessions scheduled for today</p>
                       </div>
-                    ))}
+                    ) : (
+                      todaysBookings.map((booking) => (
+                        <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <Avatar>
+                              <AvatarFallback>ST</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="font-semibold">Student</h3>
+                              <p className="text-gray-600 text-sm">{booking.subject}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold">{new Date(booking.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-green-600 text-sm">KSh {Number(booking.total_amount).toLocaleString()}</p>
+                            <Badge 
+                              variant={booking.status === 'confirmed' ? 'default' : 'secondary'}
+                              className="mt-1"
+                            >
+                              {booking.status}
+                            </Badge>
+                          </div>
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                            <Video className="h-4 w-4 mr-2" />
+                            Start
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Profile Management Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="flex items-center">
+                        <Edit className="h-5 w-5 mr-2" />
+                        Profile Management
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="relative">
+                        <Avatar className="h-20 w-20">
+                          <AvatarImage src={profile?.profile_photo_url} />
+                          <AvatarFallback className="text-lg">
+                            {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <label htmlFor="photo-upload" className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-1 cursor-pointer hover:bg-blue-700">
+                          <Camera className="h-4 w-4" />
+                        </label>
+                        <input
+                          id="photo-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleProfilePhotoUpload}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{profile?.first_name} {profile?.last_name}</h3>
+                        <p className="text-gray-600">{profile?.bio || 'No bio added yet'}</p>
+                        <p className="text-green-600 font-medium">KSh {profile?.hourly_rate || 0}/hour</p>
+                      </div>
+                      <Dialog open={showProfileEdit} onOpenChange={setShowProfileEdit}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Profile
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Edit Profile</DialogTitle>
+                          </DialogHeader>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="first_name">First Name</Label>
+                              <Input
+                                id="first_name"
+                                value={editProfile.first_name}
+                                onChange={(e) => setEditProfile(prev => ({ ...prev, first_name: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="last_name">Last Name</Label>
+                              <Input
+                                id="last_name"
+                                value={editProfile.last_name}
+                                onChange={(e) => setEditProfile(prev => ({ ...prev, last_name: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="phone">Phone</Label>
+                              <Input
+                                id="phone"
+                                value={editProfile.phone}
+                                onChange={(e) => setEditProfile(prev => ({ ...prev, phone: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="hourly_rate">Hourly Rate (KSh)</Label>
+                              <Input
+                                id="hourly_rate"
+                                type="number"
+                                value={editProfile.hourly_rate}
+                                onChange={(e) => setEditProfile(prev => ({ ...prev, hourly_rate: e.target.value }))}
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <Label htmlFor="bio">Bio</Label>
+                              <Textarea
+                                id="bio"
+                                value={editProfile.bio}
+                                onChange={(e) => setEditProfile(prev => ({ ...prev, bio: e.target.value }))}
+                                placeholder="Tell students about yourself..."
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <Label htmlFor="teaching_experience">Teaching Experience</Label>
+                              <Textarea
+                                id="teaching_experience"
+                                value={editProfile.teaching_experience}
+                                onChange={(e) => setEditProfile(prev => ({ ...prev, teaching_experience: e.target.value }))}
+                                placeholder="Describe your teaching experience..."
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <Label htmlFor="education_background">Education Background</Label>
+                              <Textarea
+                                id="education_background"
+                                value={editProfile.education_background}
+                                onChange={(e) => setEditProfile(prev => ({ ...prev, education_background: e.target.value }))}
+                                placeholder="Your educational qualifications..."
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end space-x-2 mt-6">
+                            <Button variant="outline" onClick={() => setShowProfileEdit(false)}>
+                              Cancel
+                            </Button>
+                            <Button 
+                              onClick={() => updateProfileMutation.mutate(editProfile)}
+                              disabled={updateProfileMutation.isPending}
+                            >
+                              Save Changes
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -243,18 +427,26 @@ export const TutorDashboard = () => {
                     <CardTitle>Quick Actions</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <Button variant="outline" className="w-full justify-start h-12">
-                      <BookOpen className="h-4 w-4 mr-2" />
-                      Create New Course
+                    <Link to="/course-creation">
+                      <Button variant="outline" className="w-full justify-start h-12">
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        Create New Course
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start h-12"
+                      onClick={() => setShowProfileEdit(true)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Profile
                     </Button>
-                    <Button variant="outline" className="w-full justify-start h-12">
-                      <Video className="h-4 w-4 mr-2" />
-                      Upload Video Content
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start h-12">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Schedule Session
-                    </Button>
+                    <Link to="/tutor-availability">
+                      <Button variant="outline" className="w-full justify-start h-12">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Set Availability
+                      </Button>
+                    </Link>
                     <Button variant="outline" className="w-full justify-start h-12">
                       <Users className="h-4 w-4 mr-2" />
                       View Students
@@ -271,7 +463,7 @@ export const TutorDashboard = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">This Month</span>
+                      <span className="text-gray-600">Total Earnings</span>
                       <span className="font-semibold text-green-600">KSh {monthlyStats.totalEarnings.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -299,7 +491,13 @@ export const TutorDashboard = () => {
                 <CardTitle>Course Management</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Course management features coming soon...</p>
+                <div className="text-center py-8">
+                  <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-muted-foreground mb-4">No courses created yet</p>
+                  <Link to="/course-creation">
+                    <Button>Create Your First Course</Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -316,15 +514,15 @@ export const TutorDashboard = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
                     <p className="text-2xl font-bold text-blue-600">{monthlyStats.completedSessions}</p>
-                    <p className="text-sm text-gray-600">Sessions</p>
+                    <p className="text-sm text-gray-600">Completed Sessions</p>
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">{monthlyStats.newStudents}</p>
-                    <p className="text-sm text-gray-600">New Students</p>
+                    <p className="text-2xl font-bold text-green-600">{monthlyStats.totalStudents}</p>
+                    <p className="text-sm text-gray-600">Total Students</p>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
                     <p className="text-2xl font-bold text-purple-600">{monthlyStats.averageRating}⭐</p>
-                    <p className="text-sm text-gray-600">Rating</p>
+                    <p className="text-sm text-gray-600">Average Rating</p>
                   </div>
                   <div className="text-center p-4 bg-orange-50 rounded-lg">
                     <p className="text-2xl font-bold text-orange-600">{monthlyStats.responseTime}</p>
