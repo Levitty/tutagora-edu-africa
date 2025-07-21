@@ -21,15 +21,18 @@ export const useRole = () => {
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
       
       if (error) {
         console.error('Error fetching user role:', error);
-        throw error;
+        // Don't throw, return default role instead
+        return 'student';
       }
       
       console.log('User role data from database:', data);
-      return data?.role || 'student'
+      const role = data?.role || 'student';
+      console.log('Final role being returned:', role);
+      return role;
     },
     enabled: !!user?.id,
     staleTime: 0, // Always refetch to get latest role
