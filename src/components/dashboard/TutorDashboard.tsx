@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { BookOpen, Calendar, Users, Video, Award, Settings, AlertTriangle, CheckCircle, Upload, DollarSign, Star, TrendingUp, Camera, Clock, Phone, Mail, MapPin, Edit } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BookOpen, Calendar, Users, Video, Award, Settings, AlertTriangle, CheckCircle, Upload, DollarSign, Star, TrendingUp, Camera, Clock, Phone, Mail, MapPin, Edit, Plus, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProfile } from "@/hooks/useProfile";
 import { useBookings } from "@/hooks/useBookings";
-import { useTutorAvailability } from "@/hooks/useTutorAvailability";
+import { useMyAvailability, useCreateAvailability, useDeleteAvailability } from "@/hooks/useTutorAvailability";
 import { TutorOnboarding } from "@/components/tutor/TutorOnboarding";
 import VideoUpload from "@/components/tutor/VideoUpload";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +23,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 export const TutorDashboard = () => {
   const { data: profile, refetch: refetchProfile } = useProfile();
   const { data: bookings } = useBookings();
-  const { data: availability } = useTutorAvailability();
+  const { data: availability } = useMyAvailability();
+  const createAvailability = useCreateAvailability();
+  const deleteAvailability = useDeleteAvailability();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -31,6 +34,26 @@ export const TutorDashboard = () => {
   const [showKYC, setShowKYC] = useState(false);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showAvailability, setShowAvailability] = useState(false);
+  const [showGroupClass, setShowGroupClass] = useState(false);
+  
+  // Availability management state
+  const [availabilityForm, setAvailabilityForm] = useState({
+    day_of_week: '',
+    start_time: '',
+    end_time: '',
+    is_available: true
+  });
+
+  // Group class state
+  const [groupClassForm, setGroupClassForm] = useState({
+    title: '',
+    description: '',
+    subject: '',
+    max_students: '',
+    price: '',
+    duration_minutes: '',
+    schedule: ''
+  });
   
   // Profile editing state
   const [editProfile, setEditProfile] = useState({
@@ -112,6 +135,68 @@ export const TutorDashboard = () => {
   const handleStartKYC = () => {
     setShowKYC(true);
   };
+
+  const handleAddAvailability = () => {
+    if (!availabilityForm.day_of_week || !availabilityForm.start_time || !availabilityForm.end_time) {
+      toast({ title: "Please fill all fields", variant: "destructive" });
+      return;
+    }
+
+    createAvailability.mutate({
+      day_of_week: parseInt(availabilityForm.day_of_week),
+      start_time: availabilityForm.start_time,
+      end_time: availabilityForm.end_time,
+      is_available: availabilityForm.is_available
+    });
+
+    setAvailabilityForm({
+      day_of_week: '',
+      start_time: '',
+      end_time: '',
+      is_available: true
+    });
+  };
+
+  const handleDeleteAvailability = (id: string) => {
+    deleteAvailability.mutate(id);
+  };
+
+  const handleCreateGroupClass = async () => {
+    if (!groupClassForm.title || !groupClassForm.subject || !groupClassForm.price) {
+      toast({ title: "Please fill required fields", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('live_sessions')
+        .insert({
+          tutor_id: profile?.id,
+          title: groupClassForm.title,
+          duration_minutes: parseInt(groupClassForm.duration_minutes) || 60,
+          scheduled_at: new Date().toISOString(),
+          status: 'scheduled'
+        });
+
+      if (error) throw error;
+      
+      toast({ title: "Group class created successfully!" });
+      setShowGroupClass(false);
+      setGroupClassForm({
+        title: '',
+        description: '',
+        subject: '',
+        max_students: '',
+        price: '',
+        duration_minutes: '',
+        schedule: ''
+      });
+    } catch (error: any) {
+      toast({ title: "Error creating group class", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   if (!isKycApproved) {
     return (
@@ -233,8 +318,10 @@ export const TutorDashboard = () => {
 
         {/* Main Content with Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="availability">Availability</TabsTrigger>
+            <TabsTrigger value="group-classes">Group Classes</TabsTrigger>
             <TabsTrigger value="videos">Video Content</TabsTrigger>
             <TabsTrigger value="courses">Courses</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -441,15 +528,17 @@ export const TutorDashboard = () => {
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Profile
                     </Button>
-                    <Link to="/tutor-availability">
-                      <Button variant="outline" className="w-full justify-start h-12">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Set Availability
-                      </Button>
-                    </Link>
-                    <Button variant="outline" className="w-full justify-start h-12">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start h-12"
+                      onClick={() => setShowGroupClass(true)}
+                    >
                       <Users className="h-4 w-4 mr-2" />
-                      View Students
+                      Create Group Class
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start h-12">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      View Bookings
                     </Button>
                   </CardContent>
                 </Card>
@@ -497,6 +586,200 @@ export const TutorDashboard = () => {
                   <Link to="/course-creation">
                     <Button>Create Your First Course</Button>
                   </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="availability" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center">
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Manage Availability
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Add New Availability */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-4">Add Available Time Slot</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <Label htmlFor="day_of_week">Day of Week</Label>
+                      <Select value={availabilityForm.day_of_week} onValueChange={(value) => setAvailabilityForm(prev => ({ ...prev, day_of_week: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select day" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dayNames.map((day, index) => (
+                            <SelectItem key={index} value={index.toString()}>{day}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="start_time">Start Time</Label>
+                      <Input
+                        id="start_time"
+                        type="time"
+                        value={availabilityForm.start_time}
+                        onChange={(e) => setAvailabilityForm(prev => ({ ...prev, start_time: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end_time">End Time</Label>
+                      <Input
+                        id="end_time"
+                        type="time"
+                        value={availabilityForm.end_time}
+                        onChange={(e) => setAvailabilityForm(prev => ({ ...prev, end_time: e.target.value }))}
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button onClick={handleAddAvailability} disabled={createAvailability.isPending}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Slot
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Current Availability */}
+                <div>
+                  <h3 className="font-semibold mb-4">Current Availability</h3>
+                  {availability && availability.length > 0 ? (
+                    <div className="space-y-2">
+                      {availability.map((slot) => (
+                        <div key={slot.id} className="flex items-center justify-between p-3 bg-white border rounded-lg">
+                          <div className="flex items-center space-x-4">
+                            <div className="font-medium">{dayNames[slot.day_of_week]}</div>
+                            <div className="text-gray-600">
+                              {slot.start_time} - {slot.end_time}
+                            </div>
+                            <Badge variant={slot.is_available ? "default" : "secondary"}>
+                              {slot.is_available ? "Available" : "Unavailable"}
+                            </Badge>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteAvailability(slot.id)}
+                            disabled={deleteAvailability.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>No availability slots set yet</p>
+                      <p className="text-sm">Add your available times above to let students book sessions</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="group-classes" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center">
+                    <Users className="h-5 w-5 mr-2" />
+                    Group Classes
+                  </span>
+                  <Dialog open={showGroupClass} onOpenChange={setShowGroupClass}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Group Class
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Create New Group Class</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                          <Label htmlFor="title">Class Title</Label>
+                          <Input
+                            id="title"
+                            value={groupClassForm.title}
+                            onChange={(e) => setGroupClassForm(prev => ({ ...prev, title: e.target.value }))}
+                            placeholder="e.g., KCSE Mathematics Preparation"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea
+                            id="description"
+                            value={groupClassForm.description}
+                            onChange={(e) => setGroupClassForm(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="Describe what students will learn..."
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="subject">Subject</Label>
+                          <Input
+                            id="subject"
+                            value={groupClassForm.subject}
+                            onChange={(e) => setGroupClassForm(prev => ({ ...prev, subject: e.target.value }))}
+                            placeholder="e.g., Mathematics"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="max_students">Max Students</Label>
+                          <Input
+                            id="max_students"
+                            type="number"
+                            value={groupClassForm.max_students}
+                            onChange={(e) => setGroupClassForm(prev => ({ ...prev, max_students: e.target.value }))}
+                            placeholder="e.g., 10"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="price">Price per Student (KSh)</Label>
+                          <Input
+                            id="price"
+                            type="number"
+                            value={groupClassForm.price}
+                            onChange={(e) => setGroupClassForm(prev => ({ ...prev, price: e.target.value }))}
+                            placeholder="e.g., 500"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="duration_minutes">Duration (minutes)</Label>
+                          <Input
+                            id="duration_minutes"
+                            type="number"
+                            value={groupClassForm.duration_minutes}
+                            onChange={(e) => setGroupClassForm(prev => ({ ...prev, duration_minutes: e.target.value }))}
+                            placeholder="e.g., 90"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end space-x-2 mt-6">
+                        <Button variant="outline" onClick={() => setShowGroupClass(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleCreateGroupClass}>
+                          Create Class
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No group classes created yet</p>
+                  <p className="text-sm">Create your first group class to teach multiple students together</p>
                 </div>
               </CardContent>
             </Card>
