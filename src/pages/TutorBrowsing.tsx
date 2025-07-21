@@ -22,9 +22,10 @@ const TutorBrowsing = () => {
   const navigate = useNavigate();
 
   // Fetch verified tutors from database
-  const { data: tutors = [], isLoading } = useQuery({
+  const { data: tutors = [], isLoading, refetch } = useQuery({
     queryKey: ['verified-tutors'],
     queryFn: async () => {
+      console.log('Fetching verified tutors...');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -32,10 +33,19 @@ const TutorBrowsing = () => {
         .eq('kyc_status', 'approved')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tutors:', error);
+        throw error;
+      }
+      console.log('Fetched tutors:', data);
       return data || [];
     }
   });
+
+  // Force refetch when component mounts
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const subjects = [
     { id: "all", name: "All Subjects" },
