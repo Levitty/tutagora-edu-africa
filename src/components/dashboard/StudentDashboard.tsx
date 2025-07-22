@@ -1,258 +1,241 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Calendar, Clock, Video, Award, User, Target, TrendingUp, PlayCircle } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Calendar, BookOpen, Users, Clock, Video, Star, TrendingUp, Award, Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export const StudentDashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
+  const { user, signOut } = useAuth();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const upcomingClasses = [
-    { id: 1, subject: "Mathematics", tutor: "Dr. Amina Ochieng", time: "2:00 PM", date: "Today", type: "1-on-1" },
-    { id: 2, subject: "Physics", tutor: "Prof. Kwame Asante", time: "4:00 PM", date: "Tomorrow", type: "Group" },
-    { id: 3, subject: "Chemistry", tutor: "Dr. Fatima Ibrahim", time: "10:00 AM", date: "Wednesday", type: "1-on-1" }
+  // Mock data for the dashboard
+  const upcomingSessions = [
+    {
+      id: 1,
+      tutor: "Dr. Sarah Johnson",
+      subject: "Mathematics",
+      time: "2:00 PM - 3:00 PM",
+      date: "Today",
+      avatar: "/api/placeholder/40/40"
+    },
+    {
+      id: 2,
+      tutor: "Prof. Michael Chen",
+      subject: "Physics",
+      time: "4:00 PM - 5:00 PM",
+      date: "Tomorrow",
+      avatar: "/api/placeholder/40/40"
+    }
   ];
 
-  const courses = [
-    { id: 1, title: "KCSE Mathematics Prep", progress: 75, lessons: 24, completed: 18, tutor: "Dr. Amina", nextLesson: "Calculus Basics" },
-    { id: 2, title: "Physics for JAMB", progress: 45, lessons: 32, completed: 14, tutor: "Prof. Kwame", nextLesson: "Wave Motion" },
-    { id: 3, title: "Web Development", progress: 90, lessons: 20, completed: 18, tutor: "John Doe", nextLesson: "React Hooks" }
+  const recentCourses = [
+    {
+      id: 1,
+      title: "Advanced Calculus",
+      progress: 75,
+      instructor: "Dr. Sarah Johnson",
+      nextLesson: "Integration Techniques"
+    },
+    {
+      id: 2,
+      title: "Quantum Physics",
+      progress: 45,
+      instructor: "Prof. Michael Chen",
+      nextLesson: "Wave Functions"
+    }
   ];
 
-  const learningStats = {
-    totalHours: 48,
-    coursesEnrolled: 12,
-    averageScore: 85,
-    streak: 7,
-    certificatesEarned: 3,
-    studyGoalProgress: 78
+  const studyStats = {
+    weeklyHours: 12,
+    completedSessions: 8,
+    averageGrade: 85,
+    streak: 5
   };
 
-  const recentAchievements = [
-    { title: "Mathematics Quiz Master", description: "Scored 95% in Advanced Algebra", date: "2 days ago", icon: "🏆" },
-    { title: "Consistent Learner", description: "Maintained 7-day study streak", date: "Today", icon: "🔥" },
-    { title: "Physics Explorer", description: "Completed Mechanics module", date: "1 week ago", icon: "🚀" }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <BookOpen className="h-6 w-6 text-white" />
-              </div>
+              <Link to="/">
+                <BookOpen className="h-8 w-8 text-blue-600" />
+              </Link>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Welcome back, John!</h1>
-                <p className="text-gray-600">Ready to continue your learning journey?</p>
+                <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
+                <p className="text-gray-600">Welcome back, {user?.email?.split('@')[0]}!</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                <Target className="h-3 w-3 mr-1" />
-                {learningStats.studyGoalProgress}% Goal Complete
-              </Badge>
-              <Button variant="outline" size="sm">
-                <User className="h-4 w-4 mr-2" />
-                Profile
-              </Button>
+              <Link to="/browse-tutors">
+                <Button variant="outline" size="sm">
+                  <Search className="h-4 w-4 mr-2" />
+                  Browse Tutors
+                </Button>
+              </Link>
+              <Link to="/ai-study-assistant">
+                <Button variant="outline" size="sm">AI Assistant</Button>
+              </Link>
+              <Button onClick={() => signOut()} variant="outline" size="sm">Sign Out</Button>
             </div>
           </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Learning Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Courses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{learningStats.coursesEnrolled}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Study Hours</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{learningStats.totalHours}h</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Avg Score</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{learningStats.averageScore}%</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Streak</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{learningStats.streak}d 🔥</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Certificates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{learningStats.certificatesEarned}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Goal Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{learningStats.studyGoalProgress}%</div>
-            </CardContent>
-          </Card>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Link to="/browse-tutors">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                <h3 className="font-semibold">Find a Tutor</h3>
+                <p className="text-sm text-gray-600">Browse expert tutors</p>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link to="/live-tutoring/demo-session">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <Video className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <h3 className="font-semibold">Try Demo Session</h3>
+                <p className="text-sm text-gray-600">Experience live tutoring</p>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link to="/ai-learning">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <TrendingUp className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                <h3 className="font-semibold">AI Learning</h3>
+                <p className="text-sm text-gray-600">Interactive AI lessons</p>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link to="/my-bookings">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6 text-center">
+                <Calendar className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                <h3 className="font-semibold">My Bookings</h3>
+                <p className="text-sm text-gray-600">View scheduled sessions</p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
+        {/* Dashboard Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Upcoming Classes */}
+          {/* Upcoming Sessions */}
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Calendar className="h-5 w-5 mr-2 text-blue-600" />
-                  Upcoming Classes
-                </CardTitle>
+                <CardTitle>Upcoming Sessions</CardTitle>
+                <CardDescription>Your scheduled tutoring sessions</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {upcomingClasses.map((cls) => (
-                  <div key={cls.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-blue-600 p-2 rounded-lg">
-                        <BookOpen className="h-4 w-4 text-white" />
+                {upcomingSessions.length === 0 ? (
+                  <p className="text-gray-500">No upcoming sessions scheduled.</p>
+                ) : (
+                  upcomingSessions.map((session) => (
+                    <div key={session.id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <Avatar>
+                          <AvatarImage src={session.avatar} alt={session.tutor} />
+                          <AvatarFallback>{session.tutor.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold">{session.tutor}</h3>
+                          <p className="text-sm text-gray-500">{session.subject}</p>
+                        </div>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{cls.subject}</h3>
-                        <p className="text-gray-600 text-sm">{cls.tutor} • {cls.type}</p>
+                        <Badge variant="secondary">{session.date}</Badge>
+                        <span className="ml-2 text-sm text-gray-500">{session.time}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">{cls.time}</p>
-                      <p className="text-gray-600 text-sm">{cls.date}</p>
-                    </div>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                      <Video className="h-4 w-4 mr-2" />
-                      Join
-                    </Button>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Course Progress */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
-                  Your Learning Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {courses.map((course) => (
-                  <div key={course.id} className="space-y-3 p-4 border border-gray-100 rounded-lg">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{course.title}</h3>
-                        <p className="text-sm text-gray-600">with {course.tutor}</p>
-                        <p className="text-xs text-blue-600 mt-1">Next: {course.nextLesson}</p>
-                      </div>
-                      <Badge variant="secondary">
-                        {course.completed}/{course.lessons} lessons
-                      </Badge>
-                    </div>
-                    <Progress value={course.progress} className="h-3" />
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">{course.progress}% complete</span>
-                      <Button variant="outline" size="sm">
-                        <PlayCircle className="h-4 w-4 mr-1" />
-                        Continue
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Right Column - Sidebar */}
+          {/* Calendar and Study Stats */}
           <div className="space-y-6">
-            {/* Recent Achievements */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Award className="h-5 w-5 mr-2 text-yellow-600" />
-                  Recent Achievements
-                </CardTitle>
+                <CardTitle>Study Calendar</CardTitle>
+                <CardDescription>Plan your study schedule</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Study Stats</CardTitle>
+                <CardDescription>Your weekly learning progress</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentAchievements.map((achievement, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg border border-yellow-100">
-                    <span className="text-2xl">{achievement.icon}</span>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 text-sm">{achievement.title}</h4>
-                      <p className="text-xs text-gray-600">{achievement.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">{achievement.date}</p>
-                    </div>
+                <div className="flex justify-between">
+                  <span>Weekly Hours</span>
+                  <span className="font-semibold">{studyStats.weeklyHours} hrs</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Completed Sessions</span>
+                  <span className="font-semibold">{studyStats.completedSessions}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Average Grade</span>
+                  <span className="font-semibold">{studyStats.averageGrade}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Current Streak</span>
+                  <div className="flex items-center">
+                    <Award className="h-4 w-4 mr-1 text-yellow-500" />
+                    <span className="font-semibold">{studyStats.streak} days</span>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Study Timer */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="h-5 w-5 mr-2 text-indigo-600" />
-                  Study Timer
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="text-4xl font-bold text-indigo-600">25:00</div>
-                <p className="text-gray-600">Pomodoro Session</p>
-                <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-                  <PlayCircle className="h-4 w-4 mr-2" />
-                  Start Study Session
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Browse Courses
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Schedule Class
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Award className="h-4 w-4 mr-2" />
-                  View Certificates
-                </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
+
+        {/* Recent Courses */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Courses</CardTitle>
+            <CardDescription>Your enrolled courses and progress</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {recentCourses.map((course) => (
+              <div key={course.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">{course.title}</h3>
+                  <span className="text-sm text-gray-500">Progress: {course.progress}%</span>
+                </div>
+                <Progress value={course.progress} />
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Instructor: {course.instructor}</span>
+                  <span>Next Lesson: {course.nextLesson}</span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

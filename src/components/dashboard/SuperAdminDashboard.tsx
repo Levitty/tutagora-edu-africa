@@ -1,232 +1,96 @@
-
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Users, DollarSign, TrendingUp, Settings, Eye, UserCheck, AlertTriangle, Search, FileText, GraduationCap, CheckCircle, XCircle } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-
-type KycDocumentWithProfile = {
-  id: string;
-  tutor_id: string;
-  document_type: string;
-  document_url: string;
-  status: string | null;
-  submitted_at: string;
-  reviewed_at: string | null;
-  notes: string | null;
-  academic_qualification_type: string | null;
-  tutor_profile?: {
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-  };
-};
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BookOpen, Users, DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Eye, Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const SuperAdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState<KycDocumentWithProfile | null>(null);
-  const [reviewNotes, setReviewNotes] = useState("");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { user, signOut } = useAuth();
 
-  // Fetch analytics data
-  const { data: analytics } = useQuery({
-    queryKey: ['analytics'],
+  // Fetch platform stats
+  const { data: platformStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['platform-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('analytics')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
+      const { data, error } = await supabase.rpc('get_platform_stats');
+      if (error) {
+        console.error("Error fetching platform stats:", error);
+        throw error;
+      }
       return data;
     }
   });
 
-  // Fetch all profiles for user management
-  const { data: allProfiles } = useQuery({
-    queryKey: ['all-profiles'],
+  // Fetch recent transactions
+  const { data: recentTransactions, isLoading: transactionsLoading } = useQuery({
+    queryKey: ['recent-transactions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('transactions')
         .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error("Error fetching recent transactions:", error);
+        throw error;
+      }
       return data;
     }
   });
 
-  // Fetch all KYC documents with tutor profiles
-  const { data: allKycDocuments } = useQuery({
-    queryKey: ['all-kyc-documents'],
+  // Fetch KYC documents awaiting approval
+  const { data: kycDocuments, isLoading: kycLoading, refetch: refetchKyc } = useQuery({
+    queryKey: ['kyc-documents-pending'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('kyc_documents')
-        .select('*')
-        .order('submitted_at', { ascending: false });
-      
-      if (error) throw error;
+        .select('id, user_id, document_type, status, created_at')
+        .eq('status', 'pending')
+        .limit(5);
 
-      // Fetch tutor profiles separately
-      if (data && data.length > 0) {
-        const tutorIds = [...new Set(data.map(doc => doc.tutor_id))];
-        const { data: tutorProfiles, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name')
-          .in('id', tutorIds);
-
-        if (profileError) throw profileError;
-
-        // Combine the data
-        return data.map(doc => ({
-          ...doc,
-          tutor_profile: tutorProfiles?.find(profile => profile.id === doc.tutor_id)
-        })) as KycDocumentWithProfile[];
+      if (error) {
+        console.error("Error fetching KYC documents:", error);
+        throw error;
       }
-
-      return [] as KycDocumentWithProfile[];
-    }
-  });
-
-  // Fetch courses for platform metrics
-  const { data: allCourses } = useQuery({
-    queryKey: ['all-courses'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
       return data;
     }
   });
 
-  // Fetch live sessions
-  const { data: liveSessions } = useQuery({
-    queryKey: ['live-sessions'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('live_sessions')
-        .select('*')
-        .order('scheduled_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+  const handleApproveKyc = async (documentId: string) => {
+    const { error } = await supabase
+      .from('kyc_documents')
+      .update({ status: 'approved' })
+      .eq('id', documentId);
+
+    if (error) {
+      toast.error("Failed to approve KYC document");
+      console.error("Error approving KYC document:", error);
+    } else {
+      toast.success("KYC document approved successfully!");
+      refetchKyc(); // Refresh the KYC documents list
     }
-  });
-
-  // Mutation for approving/rejecting KYC
-  const updateKycMutation = useMutation({
-    mutationFn: async ({ documentId, status, notes }: { documentId: string; status: string; notes: string }) => {
-      const { error } = await supabase
-        .from('kyc_documents')
-        .update({ 
-          status, 
-          notes,
-          reviewed_at: new Date().toISOString()
-        })
-        .eq('id', documentId);
-      
-      if (error) throw error;
-
-      // Update profile KYC status if all documents are approved
-      if (status === 'approved') {
-        const { data: tutorDocs } = await supabase
-          .from('kyc_documents')
-          .select('status, tutor_id')
-          .eq('id', documentId)
-          .single();
-
-        if (tutorDocs) {
-          const { data: allDocs } = await supabase
-            .from('kyc_documents')
-            .select('status')
-            .eq('tutor_id', tutorDocs.tutor_id);
-
-          const allApproved = allDocs?.every(doc => doc.status === 'approved');
-          
-          if (allApproved) {
-            await supabase
-              .from('profiles')
-              .update({ kyc_status: 'approved' })
-              .eq('id', tutorDocs.tutor_id);
-          }
-        }
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-kyc-documents'] });
-      queryClient.invalidateQueries({ queryKey: ['all-profiles'] });
-      toast({ title: "KYC document reviewed successfully" });
-      setSelectedDocument(null);
-      setReviewNotes("");
-    },
-  });
-
-  const handleKycAction = (status: 'approved' | 'rejected') => {
-    if (!selectedDocument) return;
-    
-    updateKycMutation.mutate({
-      documentId: selectedDocument.id,
-      status,
-      notes: reviewNotes
-    });
   };
 
-  const totalUsers = allProfiles?.length || 0;
-  const totalTutors = allProfiles?.filter(p => p.role === 'tutor').length || 0;
-  const totalStudents = allProfiles?.filter(p => p.role === 'student').length || 0;
-  const pendingKyc = allKycDocuments?.filter(doc => doc.status === 'pending').length || 0;
-  const totalCourses = allCourses?.length || 0;
-  const publishedCourses = allCourses?.filter(c => c.is_published).length || 0;
-  const activeSessions = liveSessions?.filter(s => s.status === 'live').length || 0;
+  const handleRejectKyc = async (documentId: string) => {
+    const { error } = await supabase
+      .from('kyc_documents')
+      .update({ status: 'rejected' })
+      .eq('id', documentId);
 
-  // Filter KYC documents based on search
-  const filteredKyc = allKycDocuments?.filter(doc => 
-    doc.tutor_profile?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.tutor_profile?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.document_type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getDocumentTypeIcon = (type: string) => {
-    if (type.includes('academic') || type.includes('degree') || type.includes('certificate')) {
-      return <GraduationCap className="h-5 w-5 text-blue-500" />;
-    }
-    return <FileText className="h-5 w-5 text-green-500" />;
-  };
-
-  const getDocumentTypeLabel = (type: string) => {
-    const typeMap: { [key: string]: string } = {
-      'id_card': 'National ID Card',
-      'passport': 'Passport',
-      'driving_license': 'Driving License',
-      'academic_qualification': 'Academic Qualification',
-      'certificate': 'Teaching Certificate',
-      'degree': 'Academic Degree'
-    };
-    return typeMap[type] || type.replace('_', ' ').toUpperCase();
-  };
-
-  const getStatusBadge = (status: string | null) => {
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-      case 'pending':
-      default:
-        return <Badge className="bg-orange-100 text-orange-800">Pending</Badge>;
+    if (error) {
+      toast.error("Failed to reject KYC document");
+      console.error("Error rejecting KYC document:", error);
+    } else {
+      toast.success("KYC document rejected successfully!");
+      refetchKyc(); // Refresh the KYC documents list
     }
   };
 
@@ -237,402 +101,167 @@ export const SuperAdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <BookOpen className="h-8 w-8 text-blue-600" />
+              <Link to="/">
+                <BookOpen className="h-8 w-8 text-blue-600" />
+              </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Super Admin Dashboard</h1>
-                <p className="text-gray-600">Manage the entire TUTAGORA platform</p>
+                <p className="text-gray-600">Platform Management & Analytics</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="bg-red-100 text-red-800">Super Admin</Badge>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Platform Settings
-              </Button>
+              <Link to="/browse-tutors">
+                <Button variant="outline" size="sm">
+                  <Search className="h-4 w-4 mr-2" />
+                  Browse Tutors
+                </Button>
+              </Link>
+              <Button onClick={() => signOut()} variant="outline" size="sm">Sign Out</Button>
             </div>
           </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Enhanced Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-                <Users className="h-4 w-4 mr-2" />
-                Total Users
-              </CardTitle>
+            <CardHeader>
+              <CardTitle>Total Users</CardTitle>
+              <CardDescription>All registered users</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{totalUsers}</div>
-              <p className="text-xs text-gray-500">Active platform users</p>
+              <div className="text-3xl font-bold">{platformStats?.total_users || 'Loading...'}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-                <GraduationCap className="h-4 w-4 mr-2" />
-                Active Tutors
-              </CardTitle>
+            <CardHeader>
+              <CardTitle>Total Tutors</CardTitle>
+              <CardDescription>Verified tutors on the platform</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{totalTutors}</div>
-              <p className="text-xs text-gray-500">Verified educators</p>
+              <div className="text-3xl font-bold">{platformStats?.total_tutors || 'Loading...'}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-                <BookOpen className="h-4 w-4 mr-2" />
-                Total Courses
-              </CardTitle>
+            <CardHeader>
+              <CardTitle>Total Revenue</CardTitle>
+              <CardDescription>Platform earnings this month</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{totalCourses}</div>
-              <p className="text-xs text-gray-500">{publishedCourses} published</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Pending KYC
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{pendingKyc}</div>
-              <p className="text-xs text-gray-500">Awaiting verification</p>
+              <div className="text-3xl font-bold">KSh {platformStats?.total_revenue || 'Loading...'}</div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="kyc">KYC Management</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="courses">Course Management</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Recent Activities */}
-              <div className="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent User Registrations</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {allProfiles?.slice(0, 5).map((profile) => (
-                      <div key={profile.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Avatar>
-                            <AvatarFallback>
-                              {profile.first_name?.[0]}{profile.last_name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold">{profile.first_name} {profile.last_name}</h3>
-                            <p className="text-gray-600 text-sm">{profile.user_type} • {profile.country}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant={profile.role === 'tutor' ? 'default' : 'secondary'}>
-                            {profile.role}
-                          </Badge>
-                          <p className="text-gray-600 text-sm mt-1">
-                            {new Date(profile.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Quick Actions Sidebar */}
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Platform Health</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Active Sessions</span>
-                      <span className="font-semibold text-green-600">{activeSessions}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Courses</span>
-                      <span className="font-semibold text-blue-600">{totalCourses}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Published</span>
-                      <span className="font-semibold text-green-600">{publishedCourses}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Pending KYC</span>
-                      <span className="font-semibold text-orange-600">{pendingKyc}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+        {/* Recent Transactions */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Recent Transactions</CardTitle>
+              <Link to="/admin-dashboard">
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
             </div>
-          </TabsContent>
+            <CardDescription>Latest transactions on the platform</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactionsLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">Loading transactions...</TableCell>
+                  </TableRow>
+                ) : recentTransactions?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">No transactions found.</TableCell>
+                  </TableRow>
+                ) : (
+                  recentTransactions?.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>{transaction.id}</TableCell>
+                      <TableCell>{transaction.user_id}</TableCell>
+                      <TableCell>KSh {transaction.amount}</TableCell>
+                      <TableCell>{new Date(transaction.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline">Completed</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-          <TabsContent value="kyc" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>KYC Document Management</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Search className="h-4 w-4" />
-                  <Input
-                    placeholder="Search by tutor name or document type..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm"
-                  />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {filteredKyc?.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      No KYC documents found.
-                    </div>
-                  ) : (
-                    filteredKyc?.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center space-x-4">
-                          {getDocumentTypeIcon(doc.document_type)}
-                          <div>
-                            <h3 className="font-semibold">
-                              {doc.tutor_profile?.first_name} {doc.tutor_profile?.last_name}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {getDocumentTypeLabel(doc.document_type)}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Submitted: {new Date(doc.submitted_at).toLocaleDateString()}
-                            </p>
-                            {doc.academic_qualification_type && (
-                              <p className="text-xs text-blue-600">
-                                Qualification: {doc.academic_qualification_type}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          {getStatusBadge(doc.status)}
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => setSelectedDocument(doc)}
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                View
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl">
-                              <DialogHeader>
-                                <DialogTitle>
-                                  KYC Document - {doc.tutor_profile?.first_name} {doc.tutor_profile?.last_name}
-                                </DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                                  <img 
-                                    src={doc.document_url} 
-                                    alt="KYC Document"
-                                    className="max-w-full max-h-full object-contain"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none';
-                                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                    }}
-                                  />
-                                  <div className="hidden text-gray-500 text-center">
-                                    <FileText className="h-16 w-16 mb-2 mx-auto" />
-                                    <p>Document preview not available</p>
-                                    <a 
-                                      href={doc.document_url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:underline"
-                                    >
-                                      View Document
-                                    </a>
-                                  </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                  <div><strong>Document Type:</strong> {getDocumentTypeLabel(doc.document_type)}</div>
-                                  <div><strong>Status:</strong> {doc.status || 'Pending'}</div>
-                                  <div><strong>Submitted:</strong> {new Date(doc.submitted_at).toLocaleDateString()}</div>
-                                  <div><strong>Reviewed:</strong> {doc.reviewed_at ? new Date(doc.reviewed_at).toLocaleDateString() : 'Not reviewed'}</div>
-                                  {doc.academic_qualification_type && (
-                                    <div className="col-span-2">
-                                      <strong>Academic Qualification:</strong> {doc.academic_qualification_type}
-                                    </div>
-                                  )}
-                                  {doc.notes && (
-                                    <div className="col-span-2">
-                                      <strong>Notes:</strong> {doc.notes}
-                                    </div>
-                                  )}
-                                </div>
-
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">Review Notes:</label>
-                                  <Textarea
-                                    placeholder="Add notes about this verification..."
-                                    value={reviewNotes}
-                                    onChange={(e) => setReviewNotes(e.target.value)}
-                                  />
-                                </div>
-
-                                <div className="flex space-x-2">
-                                  <Button 
-                                    onClick={() => handleKycAction('approved')}
-                                    disabled={updateKycMutation.isPending}
-                                    className="bg-green-600 hover:bg-green-700"
-                                  >
-                                    <CheckCircle className="h-4 w-4 mr-1" />
-                                    Approve
-                                  </Button>
-                                  <Button 
-                                    onClick={() => handleKycAction('rejected')}
-                                    disabled={updateKycMutation.isPending}
-                                    variant="destructive"
-                                  >
-                                    <XCircle className="h-4 w-4 mr-1" />
-                                    Reject
-                                  </Button>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Users ({totalUsers})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {allProfiles?.map((profile) => (
-                    <div key={profile.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarFallback>
-                            {profile.first_name?.[0]}{profile.last_name?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold">{profile.first_name} {profile.last_name}</h3>
-                          <p className="text-gray-600 text-sm">{profile.user_type} • {profile.country}</p>
-                          <p className="text-xs text-gray-500">Joined: {new Date(profile.created_at).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <div>
-                          <Badge variant={profile.role === 'tutor' ? 'default' : 'secondary'}>
-                            {profile.role}
-                          </Badge>
-                        </div>
-                        {profile.role === 'tutor' && (
-                          <Badge 
-                            variant={profile.kyc_status === 'approved' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            KYC: {profile.kyc_status}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="courses" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Course Management ({totalCourses} total, {publishedCourses} published)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {allCourses?.map((course) => (
-                    <div key={course.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <BookOpen className="h-8 w-8 text-blue-500" />
-                        <div>
-                          <h3 className="font-semibold">{course.title}</h3>
-                          <p className="text-gray-600 text-sm">{course.subject} • {course.level}</p>
-                          <p className="text-xs text-gray-500">
-                            Created: {new Date(course.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <Badge variant={course.is_published ? 'default' : 'secondary'}>
-                          {course.is_published ? 'Published' : 'Draft'}
-                        </Badge>
-                        {course.price && (
-                          <p className="text-sm font-semibold text-green-600">
-                            ${course.price}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2" />
-                  Platform Analytics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {analytics?.length === 0 ? (
-                    <p className="text-gray-500">No analytics data available yet.</p>
-                  ) : (
-                    analytics?.slice(0, 10).map((metric) => (
-                      <div key={metric.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                        <div>
-                          <span className="font-medium">{metric.metric_name}</span>
-                          <p className="text-xs text-gray-500">{metric.metric_date}</p>
-                        </div>
-                        <span className="text-blue-600 font-bold">{metric.metric_value}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* KYC Documents Awaiting Approval */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>KYC Documents Awaiting Approval</CardTitle>
+              <Link to="/admin-dashboard">
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
+            </div>
+            <CardDescription>Review and approve tutor KYC documents</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Document Type</TableHead>
+                  <TableHead>Date Uploaded</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {kycLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">Loading KYC documents...</TableCell>
+                  </TableRow>
+                ) : kycDocuments?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center">No KYC documents awaiting approval.</TableCell>
+                  </TableRow>
+                ) : (
+                  kycDocuments?.map((doc) => (
+                    <TableRow key={doc.id}>
+                      <TableCell>{doc.user_id}</TableCell>
+                      <TableCell>{doc.document_type}</TableCell>
+                      <TableCell>{new Date(doc.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-center">
+                        <Button variant="ghost" size="sm" onClick={() => handleApproveKyc(doc.id)}>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Approve
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleRejectKyc(doc.id)}>
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Reject
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
