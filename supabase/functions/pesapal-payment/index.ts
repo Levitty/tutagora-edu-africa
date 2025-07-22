@@ -77,19 +77,31 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Generated merchant reference:", merchantReference);
 
     // Check if required Pesapal environment variables are set
-    const pesapalBaseUrl = Deno.env.get("PESAPAL_BASE_URL");
+    let pesapalBaseUrl = Deno.env.get("PESAPAL_BASE_URL");
     const pesapalConsumerKey = Deno.env.get("PESAPAL_CONSUMER_KEY");
     const pesapalConsumerSecret = Deno.env.get("PESAPAL_CONSUMER_SECRET");
 
     if (!pesapalBaseUrl || !pesapalConsumerKey || !pesapalConsumerSecret) {
       console.error("Missing Pesapal environment variables");
-      throw new Error("Payment service configuration error");
+      throw new Error("Payment service configuration error - missing environment variables");
     }
 
+    // Ensure the base URL has the correct protocol
+    if (!pesapalBaseUrl.startsWith('http://') && !pesapalBaseUrl.startsWith('https://')) {
+      pesapalBaseUrl = `https://${pesapalBaseUrl}`;
+    }
+
+    // Remove trailing slash if present
+    pesapalBaseUrl = pesapalBaseUrl.replace(/\/$/, '');
+
+    console.log("Using Pesapal Base URL:", pesapalBaseUrl);
     console.log("Requesting Pesapal access token...");
 
     // Get Pesapal access token
-    const authResponse = await fetch(`${pesapalBaseUrl}/api/Auth/RequestToken`, {
+    const authUrl = `${pesapalBaseUrl}/api/Auth/RequestToken`;
+    console.log("Auth URL:", authUrl);
+
+    const authResponse = await fetch(authUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -104,7 +116,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (!authResponse.ok) {
       const authError = await authResponse.text();
       console.error("Pesapal auth failed:", authError);
-      throw new Error("Failed to authenticate with Pesapal");
+      console.error("Auth response status:", authResponse.status);
+      throw new Error(`Failed to authenticate with Pesapal: ${authResponse.status} - ${authError}`);
     }
 
     const authData = await authResponse.json();
@@ -136,7 +149,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Creating Pesapal order:", orderData);
 
-    const orderResponse = await fetch(`${pesapalBaseUrl}/api/Transactions/SubmitOrderRequest`, {
+    const orderUrl = `${pesapalBaseUrl}/api/Transactions/SubmitOrderRequest`;
+    console.log("Order URL:", orderUrl);
+
+    const orderResponse = await fetch(orderUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -149,7 +165,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (!orderResponse.ok) {
       const orderError = await orderResponse.text();
       console.error("Pesapal order creation failed:", orderError);
-      throw new Error("Failed to create payment order");
+      console.error("Order response status:", orderResponse.status);
+      throw new Error(`Failed to create payment order: ${orderResponse.status} - ${orderError}`);
     }
 
     const orderResult = await orderResponse.json();
