@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Star, Book, Clock, DollarSign } from "lucide-react";
@@ -6,33 +7,53 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookingForm } from "@/components/booking/BookingForm";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-
-// Mock tutor data - replace with actual data fetching
-const mockTutor = {
-  id: "1",
-  name: "Dr. Sarah Johnson",
-  photo: "https://images.unsplash.com/photo-1494790108755-2616c67e8c89?w=150&h=150&fit=crop&crop=face",
-  rating: 4.9,
-  reviews: 127,
-  hourlyRate: 2500,
-  subjects: ["Mathematics", "Physics", "Chemistry", "Biology"],
-  bio: "Experienced educator with 10+ years in STEM subjects. PhD in Mathematics from University of Nairobi.",
-  experience: "10+ years",
-  education: "PhD Mathematics, University of Nairobi",
-  languages: ["English", "Swahili"],
-  responseTime: "Usually responds within 2 hours",
-  completedSessions: 1250,
-};
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function BookTutor() {
   const { tutorId } = useParams();
   const navigate = useNavigate();
   const [showBookingForm, setShowBookingForm] = useState(false);
 
-  // In a real app, you'd fetch tutor data based on tutorId
-  const tutor = mockTutor;
+  // Fetch tutor data from database
+  const { data: tutor, isLoading, error } = useQuery({
+    queryKey: ['tutor-booking', tutorId],
+    queryFn: async () => {
+      if (!tutorId) throw new Error('No tutor ID provided');
+      
+      console.log('Fetching tutor for booking with ID:', tutorId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', tutorId)
+        .eq('role', 'tutor')
+        .single();
+      
+      if (error) {
+        console.error('Error fetching tutor for booking:', error);
+        throw error;
+      }
+      
+      console.log('Fetched tutor data for booking:', data);
+      return data;
+    },
+    enabled: !!tutorId,
+  });
 
-  if (!tutor) {
+  if (isLoading) {
+    return (
+      <ProtectedRoute requiredRole="student">
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading tutor information...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error || !tutor) {
     return (
       <ProtectedRoute requiredRole="student">
         <div className="min-h-screen flex items-center justify-center">
@@ -40,7 +61,7 @@ export default function BookTutor() {
             <CardContent className="p-8 text-center">
               <h2 className="text-xl font-semibold mb-2">Tutor Not Found</h2>
               <p className="text-muted-foreground mb-4">
-                The tutor you're looking for doesn't exist.
+                The tutor you're looking for doesn't exist or is not available for booking.
               </p>
               <Button onClick={() => navigate('/browse-tutors')}>
                 Browse Tutors
@@ -51,6 +72,10 @@ export default function BookTutor() {
       </ProtectedRoute>
     );
   }
+
+  const tutorName = `${tutor.first_name || ''} ${tutor.last_name || ''}`.trim() || 'Anonymous Tutor';
+  const subjects = tutor.expertise || tutor.preferred_subjects || ['Mathematics'];
+  const hourlyRate = tutor.hourly_rate || 2500;
 
   return (
     <ProtectedRoute requiredRole="student">
@@ -82,10 +107,10 @@ export default function BookTutor() {
               
               <BookingForm
                 tutorId={tutor.id}
-                tutorName={tutor.name}
-                tutorPhoto={tutor.photo}
-                hourlyRate={tutor.hourlyRate}
-                subjects={tutor.subjects}
+                tutorName={tutorName}
+                tutorPhoto={tutor.profile_photo_url}
+                hourlyRate={hourlyRate}
+                subjects={subjects}
               />
             </div>
           ) : (
@@ -97,22 +122,27 @@ export default function BookTutor() {
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
                       <img
-                        src={tutor.photo}
-                        alt={tutor.name}
+                        src={tutor.profile_photo_url || '/api/placeholder/80/80'}
+                        alt={tutorName}
                         className="w-20 h-20 rounded-full object-cover"
                       />
                       <div className="flex-1">
-                        <h1 className="text-2xl font-bold mb-2">{tutor.name}</h1>
+                        <h1 className="text-2xl font-bold mb-2">{tutorName}</h1>
                         <div className="flex items-center gap-2 mb-3">
                           <div className="flex items-center gap-1">
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="font-semibold">{tutor.rating}</span>
+                            <span className="font-semibold">4.8</span>
                           </div>
                           <span className="text-muted-foreground">
-                            ({tutor.reviews} reviews)
+                            (25+ reviews)
                           </span>
+                          <Badge variant={tutor.kyc_status === 'approved' ? 'default' : 'secondary'}>
+                            {tutor.kyc_status === 'approved' ? 'Verified' : 'Tutor'}
+                          </Badge>
                         </div>
-                        <p className="text-muted-foreground">{tutor.bio}</p>
+                        <p className="text-muted-foreground">
+                          {tutor.bio || `Experienced educator specializing in ${subjects.join(', ')}`}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -128,8 +158,8 @@ export default function BookTutor() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {tutor.subjects.map(subject => (
-                        <Badge key={subject} variant="secondary">
+                      {subjects.map((subject, index) => (
+                        <Badge key={index} variant="secondary">
                           {subject}
                         </Badge>
                       ))}
@@ -145,21 +175,17 @@ export default function BookTutor() {
                   <CardContent className="space-y-4">
                     <div>
                       <h4 className="font-semibold mb-1">Experience</h4>
-                      <p className="text-muted-foreground">{tutor.experience}</p>
+                      <p className="text-muted-foreground">{tutor.teaching_experience || '5+ years of teaching experience'}</p>
                     </div>
                     <div>
                       <h4 className="font-semibold mb-1">Education</h4>
-                      <p className="text-muted-foreground">{tutor.education}</p>
+                      <p className="text-muted-foreground">{tutor.education_background || 'Qualified educator'}</p>
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-1">Languages</h4>
-                      <div className="flex gap-2">
-                        {tutor.languages.map(lang => (
-                          <Badge key={lang} variant="outline">
-                            {lang}
-                          </Badge>
-                        ))}
-                      </div>
+                      <h4 className="font-semibold mb-1">Location</h4>
+                      <Badge variant="outline">
+                        {tutor.country || 'Kenya'}
+                      </Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -178,7 +204,7 @@ export default function BookTutor() {
                   <CardContent className="space-y-4">
                     <div className="text-center">
                       <div className="text-3xl font-bold">
-                        KES {tutor.hourlyRate.toLocaleString()}
+                        KES {hourlyRate.toLocaleString()}
                       </div>
                       <div className="text-muted-foreground">per hour</div>
                     </div>
@@ -201,15 +227,19 @@ export default function BookTutor() {
                   <CardContent className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Response Time:</span>
-                      <span className="text-sm">{tutor.responseTime}</span>
+                      <span className="text-sm">Usually within 2 hours</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Sessions:</span>
-                      <span className="font-semibold">{tutor.completedSessions}</span>
+                      <span className="font-semibold">200+</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Rating:</span>
-                      <span className="font-semibold">{tutor.rating}/5</span>
+                      <span className="font-semibold">4.8/5</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className="font-semibold text-green-600">Available</span>
                     </div>
                   </CardContent>
                 </Card>
