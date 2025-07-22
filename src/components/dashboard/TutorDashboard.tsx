@@ -8,17 +8,37 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, BookOpen, Users, Clock, Video, Star, DollarSign, Upload, Search } from "lucide-react";
+import { Calendar, BookOpen, Users, Clock, Video, Star, DollarSign, Upload, Search, Plus, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { MultiSelect } from "@/components/ui/multi-select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useMyAvailability, useCreateAvailability } from "@/hooks/useTutorAvailability";
+
+const SUBJECTS = [
+  "Mathematics", "English", "Physics", "Chemistry", "Biology", "History", 
+  "Geography", "Economics", "Business Studies", "Accounting", "Computer Science",
+  "Programming", "Web Development", "Software Engineering", "Data Science",
+  "Statistics", "Kiswahili", "French", "German", "Spanish", "Art & Design",
+  "Music", "Physical Education", "Religious Studies", "Philosophy", "Psychology",
+  "Sociology", "Political Science", "Literature", "Creative Writing", "Public Speaking"
+];
+
+const SPECIALIZATIONS = [
+  "KCSE Preparation", "IGCSE", "A-Level", "University Level", "Professional Certification",
+  "Beginner Level", "Intermediate Level", "Advanced Level", "Adult Learning",
+  "Special Needs Education", "Online Teaching", "Group Classes", "One-on-One Tutoring",
+  "Exam Preparation", "Homework Help", "Project Assistance", "Research Methods"
+];
 
 export const TutorDashboard = () => {
   const { user, signOut } = useAuth();
   const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useProfile();
+  const { data: availability } = useMyAvailability();
+  const createAvailabilityMutation = useCreateAvailability();
+  
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
@@ -31,33 +51,33 @@ export const TutorDashboard = () => {
   const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const subjectOptions = [
-    { value: "mathematics", label: "Mathematics" },
-    { value: "physics", label: "Physics" },
-    { value: "chemistry", label: "Chemistry" },
-    { value: "biology", label: "Biology" },
-    { value: "english", label: "English" },
-    { value: "kiswahili", label: "Kiswahili" },
-    { value: "history", label: "History" },
-    { value: "geography", label: "Geography" },
-    { value: "business_studies", label: "Business Studies" },
-    { value: "economics", label: "Economics" },
-    { value: "accounting", label: "Accounting" },
-    { value: "computer_studies", label: "Computer Studies" },
-    { value: "programming", label: "Programming" },
-    { value: "acca", label: "ACCA" },
-    { value: "cpa", label: "CPA" },
-    { value: "statistics", label: "Statistics" },
-    { value: "agriculture", label: "Agriculture" },
-    { value: "art_design", label: "Art & Design" },
-    { value: "music", label: "Music" },
-    { value: "french", label: "French" },
-    { value: "german", label: "German" },
-    { value: "arabic", label: "Arabic" }
+  // Mock data for bookings and earnings
+  const recentBookings = [
+    {
+      id: 1,
+      student: "John Kamau",
+      subject: "Mathematics",
+      date: "Dec 15, 2024",
+      time: "14:00-15:00",
+      status: "confirmed" as const
+    },
+    {
+      id: 2,
+      student: "Sarah Oduya",
+      subject: "Physics", 
+      date: "Dec 16, 2024",
+      time: "16:00-17:00",
+      status: "pending" as const
+    }
   ];
 
-  // Convert subject options to string array for MultiSelect component
-  const subjectStrings = subjectOptions.map(option => option.label);
+  const quickStats = {
+    totalEarnings: 45000,
+    monthlyEarnings: 12500,
+    totalSessions: 78,
+    upcomingSessions: 5,
+    completionRate: 98
+  };
 
   useEffect(() => {
     if (profile) {
@@ -71,16 +91,40 @@ export const TutorDashboard = () => {
     }
   }, [profile]);
 
-  useEffect(() => {
-    if (user?.id && !profileLoading) {
-      refetchProfile();
-    }
-  }, [user?.id, refetchProfile, profileLoading]);
-
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setProfilePhoto(e.target.files[0]);
     }
+  };
+
+  const handleSubjectAdd = (subject: string) => {
+    if (!selectedSubjects.includes(subject)) {
+      setSelectedSubjects([...selectedSubjects, subject]);
+    }
+  };
+
+  const handleSubjectRemove = (subject: string) => {
+    setSelectedSubjects(selectedSubjects.filter(s => s !== subject));
+  };
+
+  const handleSpecializationAdd = (specialization: string) => {
+    if (!selectedSpecializations.includes(specialization)) {
+      setSelectedSpecializations([...selectedSpecializations, specialization]);
+    }
+  };
+
+  const handleSpecializationRemove = (specialization: string) => {
+    setSelectedSpecializations(selectedSpecializations.filter(s => s !== specialization));
+  };
+
+  const handleExpertiseAdd = (expertise: string) => {
+    if (!selectedExpertise.includes(expertise)) {
+      setSelectedExpertise([...selectedExpertise, expertise]);
+    }
+  };
+
+  const handleExpertiseRemove = (expertise: string) => {
+    setSelectedExpertise(selectedExpertise.filter(s => s !== expertise));
   };
 
   const handleSubmitProfile = async () => {
@@ -180,13 +224,77 @@ export const TutorDashboard = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <DollarSign className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Earnings</p>
+                  <p className="text-2xl font-bold text-gray-900">KSh {quickStats.totalEarnings.toLocaleString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Calendar className="h-8 w-8 text-blue-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">This Month</p>
+                  <p className="text-2xl font-bold text-gray-900">KSh {quickStats.monthlyEarnings.toLocaleString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Users className="h-8 w-8 text-purple-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">{quickStats.totalSessions}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Clock className="h-8 w-8 text-orange-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Upcoming</p>
+                  <p className="text-2xl font-bold text-gray-900">{quickStats.upcomingSessions}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Star className="h-8 w-8 text-yellow-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                  <p className="text-2xl font-bold text-gray-900">{quickStats.completionRate}%</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs defaultValue="profile" className="space-y-4">
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="courses">Courses</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="availability">Availability</TabsTrigger>
             <TabsTrigger value="earnings">Earnings</TabsTrigger>
           </TabsList>
+
           <TabsContent value="profile" className="space-y-4">
             <Card>
               <CardHeader>
@@ -213,6 +321,9 @@ export const TutorDashboard = () => {
                           {profile?.first_name} {profile?.last_name}
                         </h2>
                         <p className="text-sm text-gray-500">{user?.email}</p>
+                        <Badge variant={profile?.kyc_status === 'approved' ? 'default' : 'secondary'}>
+                          KYC: {profile?.kyc_status || 'pending'}
+                        </Badge>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -224,7 +335,7 @@ export const TutorDashboard = () => {
                         <span className="text-gray-600">Hourly Rate:</span>
                         <p>
                           {profile?.hourly_rate
-                            ? `$${profile?.hourly_rate.toFixed(2)}`
+                            ? `KSh ${profile?.hourly_rate.toFixed(2)}`
                             : "Not set"}
                         </p>
                       </div>
@@ -256,7 +367,7 @@ export const TutorDashboard = () => {
                           ))}
                         </div>
                       </div>
-                      <div>
+                      <div className="md:col-span-2">
                         <span className="text-gray-600">Preferred Subjects:</span>
                         <div className="flex flex-wrap gap-1">
                           {(profile?.preferred_subjects || []).map((subject) => (
@@ -303,7 +414,7 @@ export const TutorDashboard = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="hourlyRate">Hourly Rate</Label>
+                    <Label htmlFor="hourlyRate">Hourly Rate (KSh)</Label>
                     <Input
                       type="number"
                       id="hourlyRate"
@@ -317,7 +428,7 @@ export const TutorDashboard = () => {
                     <Input
                       type="text"
                       id="teachingExperience"
-                      placeholder="Enter your teaching experience"
+                      placeholder="e.g., 5 years"
                       value={teachingExperience}
                       onChange={(e) => setTeachingExperience(e.target.value)}
                     />
@@ -327,35 +438,84 @@ export const TutorDashboard = () => {
                     <Input
                       type="text"
                       id="educationBackground"
-                      placeholder="Enter your education background"
+                      placeholder="e.g., Bachelor of Education - Mathematics"
                       value={educationBackground}
                       onChange={(e) => setEducationBackground(e.target.value)}
                     />
                   </div>
+                  
+                  {/* Subjects */}
                   <div className="space-y-2">
-                    <Label htmlFor="expertise">Areas of Expertise</Label>
-                    <MultiSelect
-                      options={subjectStrings}
-                      value={selectedExpertise}
-                      onChange={setSelectedExpertise}
-                    />
+                    <Label>Preferred Subjects</Label>
+                    <Select onValueChange={handleSubjectAdd}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Add a subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUBJECTS.filter(s => !selectedSubjects.includes(s)).map((subject) => (
+                          <SelectItem key={subject} value={subject}>
+                            {subject}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedSubjects.map((subject) => (
+                        <Badge key={subject} variant="secondary" className="cursor-pointer" onClick={() => handleSubjectRemove(subject)}>
+                          {subject} ×
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Areas of Expertise */}
                   <div className="space-y-2">
-                    <Label htmlFor="specializations">Specializations</Label>
-                    <MultiSelect
-                      options={subjectStrings}
-                      value={selectedSpecializations}
-                      onChange={setSelectedSpecializations}
-                    />
+                    <Label>Areas of Expertise</Label>
+                    <Select onValueChange={handleExpertiseAdd}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Add expertise area" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUBJECTS.filter(s => !selectedExpertise.includes(s)).map((subject) => (
+                          <SelectItem key={subject} value={subject}>
+                            {subject}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedExpertise.map((expertise) => (
+                        <Badge key={expertise} variant="secondary" className="cursor-pointer" onClick={() => handleExpertiseRemove(expertise)}>
+                          {expertise} ×
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Specializations */}
                   <div className="space-y-2">
-                    <Label htmlFor="subjects">Preferred Subjects</Label>
-                    <MultiSelect
-                      options={subjectStrings}
-                      value={selectedSubjects}
-                      onChange={setSelectedSubjects}
-                    />
+                    <Label>Specializations</Label>
+                    <Select onValueChange={handleSpecializationAdd}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Add a specialization" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SPECIALIZATIONS.filter(s => !selectedSpecializations.includes(s)).map((specialization) => (
+                          <SelectItem key={specialization} value={specialization}>
+                            {specialization}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedSpecializations.map((specialization) => (
+                        <Badge key={specialization} variant="secondary" className="cursor-pointer" onClick={() => handleSpecializationRemove(specialization)}>
+                          {specialization} ×
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
+
                   <div className="flex justify-end space-x-2">
                     <Button
                       variant="secondary"
@@ -374,42 +534,97 @@ export const TutorDashboard = () => {
               </Card>
             )}
           </TabsContent>
-          <TabsContent value="courses">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Courses</CardTitle>
-                <CardDescription>
-                  Manage and create your courses.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Coming soon!</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
           <TabsContent value="bookings">
             <Card>
               <CardHeader>
-                <CardTitle>Your Bookings</CardTitle>
+                <CardTitle>Recent Bookings</CardTitle>
                 <CardDescription>
                   View and manage your tutoring sessions.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p>Coming soon!</p>
+                <div className="space-y-4">
+                  {recentBookings.map((booking) => (
+                    <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h4 className="font-semibold">{booking.student}</h4>
+                        <p className="text-sm text-gray-600">{booking.subject}</p>
+                        <p className="text-sm text-gray-500">{booking.date} • {booking.time}</p>
+                      </div>
+                      <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                        {booking.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="availability">
+            <Card>
+              <CardHeader>
+                <CardTitle>Availability Management</CardTitle>
+                <CardDescription>
+                  Set your available time slots for tutoring sessions.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Link to="/tutor-availability">
+                    <Button>
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Manage Full Availability
+                    </Button>
+                  </Link>
+                  
+                  {availability && availability.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-2">Current Availability:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {availability.map((slot) => (
+                          <div key={slot.id} className="p-2 bg-gray-50 rounded">
+                            <span className="font-medium">
+                              {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][slot.day_of_week]}
+                            </span>
+                            <span className="ml-2 text-sm text-gray-600">
+                              {slot.start_time} - {slot.end_time}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="earnings">
             <Card>
               <CardHeader>
-                <CardTitle>Earnings</CardTitle>
+                <CardTitle>Earnings Overview</CardTitle>
                 <CardDescription>
                   Track your earnings and payment history.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p>Coming soon!</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">KSh {quickStats.totalEarnings.toLocaleString()}</div>
+                    <div className="text-sm text-gray-600">Total Earnings</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">KSh {quickStats.monthlyEarnings.toLocaleString()}</div>
+                    <div className="text-sm text-gray-600">This Month</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">{quickStats.totalSessions}</div>
+                    <div className="text-sm text-gray-600">Sessions Completed</div>
+                  </div>
+                </div>
+                <p className="text-gray-600">Detailed earnings tracking coming soon!</p>
               </CardContent>
             </Card>
           </TabsContent>

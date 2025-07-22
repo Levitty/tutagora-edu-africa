@@ -6,24 +6,33 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Clock, Users, Settings, Plus, Edit, Trash2, Calendar as CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMyAvailability, useCreateAvailability, useDeleteAvailability } from "@/hooks/useTutorAvailability";
+import { toast } from "sonner";
 
 const TutorAvailability = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
+  const [selectedDay, setSelectedDay] = useState<number>(1); // Monday = 1
+  const [startTime, setStartTime] = useState<string>("09:00");
+  const [endTime, setEndTime] = useState<string>("10:00");
+  
+  const { data: availability, isLoading } = useMyAvailability();
+  const createAvailabilityMutation = useCreateAvailability();
+  const deleteAvailabilityMutation = useDeleteAvailability();
 
   const timeSlots = [
     "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", 
     "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"
   ];
 
-  const weeklySchedule = [
-    { day: "Monday", slots: ["09:00-10:00", "14:00-15:00", "16:00-17:00"] },
-    { day: "Tuesday", slots: ["10:00-11:00", "15:00-16:00"] },
-    { day: "Wednesday", slots: ["09:00-10:00", "11:00-12:00", "14:00-15:00"] },
-    { day: "Thursday", slots: ["10:00-11:00", "16:00-17:00"] },
-    { day: "Friday", slots: ["09:00-10:00", "13:00-14:00", "15:00-16:00"] },
-    { day: "Saturday", slots: ["10:00-11:00", "11:00-12:00"] },
-    { day: "Sunday", slots: ["14:00-15:00"] }
+  const daysOfWeek = [
+    { value: 1, label: "Monday" },
+    { value: 2, label: "Tuesday" },
+    { value: 3, label: "Wednesday" },
+    { value: 4, label: "Thursday" },
+    { value: 5, label: "Friday" },
+    { value: 6, label: "Saturday" },
+    { value: 0, label: "Sunday" }
   ];
 
   const upcomingBookings = [
@@ -56,46 +65,45 @@ const TutorAvailability = () => {
     }
   ];
 
-  const groupClasses = [
-    {
-      id: 1,
-      title: "KCSE Mathematics Prep",
-      description: "Intensive preparation for KCSE Mathematics exam",
-      schedule: "Mon, Wed, Fri - 16:00-17:00",
-      students: 15,
-      maxStudents: 20,
-      price: "KSh 2,500/month",
-      status: "active"
-    },
-    {
-      id: 2,
-      title: "Physics Fundamentals",
-      description: "Core physics concepts for high school students",
-      schedule: "Tue, Thu - 15:00-16:00",
-      students: 12,
-      maxStudents: 15,
-      price: "KSh 2,000/month",
-      status: "active"
-    },
-    {
-      id: 3,
-      title: "Chemistry Lab Techniques",
-      description: "Practical chemistry for advanced students",
-      schedule: "Saturday - 10:00-12:00",
-      students: 8,
-      maxStudents: 12,
-      price: "KSh 3,000/month",
-      status: "draft"
+  const handleAddAvailability = async () => {
+    if (startTime >= endTime) {
+      toast.error("End time must be after start time");
+      return;
     }
-  ];
 
-  const toggleTimeSlot = (time: string) => {
-    setSelectedTimeSlots(prev => 
-      prev.includes(time) 
-        ? prev.filter(t => t !== time)
-        : [...prev, time]
-    );
+    try {
+      await createAvailabilityMutation.mutateAsync({
+        day_of_week: selectedDay,
+        start_time: startTime,
+        end_time: endTime,
+        is_available: true
+      });
+      
+      // Reset form
+      setSelectedDay(1);
+      setStartTime("09:00");
+      setEndTime("10:00");
+    } catch (error) {
+      console.error("Error adding availability:", error);
+    }
   };
+
+  const handleRemoveAvailability = async (id: string) => {
+    try {
+      await deleteAvailabilityMutation.mutateAsync(id);
+    } catch (error) {
+      console.error("Error removing availability:", error);
+    }
+  };
+
+  const groupedAvailability = availability?.reduce((acc, slot) => {
+    const day = slot.day_of_week;
+    if (!acc[day]) {
+      acc[day] = [];
+    }
+    acc[day].push(slot);
+    return acc;
+  }, {} as Record<number, typeof availability>) || {};
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -110,7 +118,6 @@ const TutorAvailability = () => {
             <nav className="hidden md:flex items-center space-x-6">
               <Link to="/tutor-dashboard" className="text-gray-700 hover:text-blue-600">Dashboard</Link>
               <Link to="/tutor-availability" className="text-blue-600 font-semibold">Availability</Link>
-              <Link to="/course-creation" className="text-gray-700 hover:text-blue-600">Create Course</Link>
             </nav>
             <Button variant="outline" size="sm">
               <Settings className="h-4 w-4 mr-2" />
@@ -124,97 +131,120 @@ const TutorAvailability = () => {
         {/* Page Title */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Manage Your Availability</h1>
-          <p className="text-gray-600 mt-2">Set your available time slots and manage group classes</p>
+          <p className="text-gray-600 mt-2">Set your available time slots for tutoring sessions</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Calendar and Time Slots */}
+          {/* Add New Availability */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Calendar */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <CalendarIcon className="h-5 w-5 mr-2" />
-                  Set Available Dates
+                  <Plus className="h-5 w-5 mr-2" />
+                  Add New Availability
                 </CardTitle>
-                <CardDescription>Select dates when you're available to teach</CardDescription>
+                <CardDescription>Create a new weekly availability slot</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex justify-center">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    className="rounded-md border"
-                  />
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Day of Week</label>
+                    <Select value={selectedDay.toString()} onValueChange={(value) => setSelectedDay(parseInt(value))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {daysOfWeek.map((day) => (
+                          <SelectItem key={day.value} value={day.value.toString()}>
+                            {day.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Start Time</label>
+                    <Select value={startTime} onValueChange={setStartTime}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeSlots.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">End Time</label>
+                    <Select value={endTime} onValueChange={setEndTime}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeSlots.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
+
+                <Button 
+                  onClick={handleAddAvailability}
+                  disabled={createAvailabilityMutation.isPending}
+                  className="w-full"
+                >
+                  {createAvailabilityMutation.isPending ? "Adding..." : "Add Availability Slot"}
+                </Button>
               </CardContent>
             </Card>
 
-            {/* Time Slots */}
+            {/* Current Availability */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="h-5 w-5 mr-2" />
-                  Available Time Slots
-                </CardTitle>
-                <CardDescription>
-                  {selectedDate ? `Select time slots for ${selectedDate.toDateString()}` : "Select a date first"}
-                </CardDescription>
+                <CardTitle>Current Weekly Schedule</CardTitle>
+                <CardDescription>Your current availability across the week</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-3">
-                  {timeSlots.map((time) => (
-                    <Button
-                      key={time}
-                      variant={selectedTimeSlots.includes(time) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => toggleTimeSlot(time)}
-                      className="h-10"
-                    >
-                      {time}
-                    </Button>
-                  ))}
-                </div>
-                <div className="mt-6 flex justify-end space-x-3">
-                  <Button variant="outline" onClick={() => setSelectedTimeSlots([])}>
-                    Clear All
-                  </Button>
-                  <Button>
-                    Save Availability
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Weekly Schedule Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Weekly Schedule Overview</CardTitle>
-                <CardDescription>Your current weekly availability</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {weeklySchedule.map((schedule, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="font-medium text-gray-900">{schedule.day}</div>
-                      <div className="flex flex-wrap gap-2">
-                        {schedule.slots.length > 0 ? (
-                          schedule.slots.map((slot, slotIndex) => (
-                            <Badge key={slotIndex} variant="secondary">
-                              {slot}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-gray-400 text-sm">No availability</span>
-                        )}
+                {isLoading ? (
+                  <div className="text-center py-4">Loading availability...</div>
+                ) : (
+                  <div className="space-y-4">
+                    {daysOfWeek.map((day) => (
+                      <div key={day.value} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="font-medium text-gray-900">{day.label}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {groupedAvailability[day.value]?.length > 0 ? (
+                            groupedAvailability[day.value].map((slot) => (
+                              <div key={slot.id} className="flex items-center gap-2">
+                                <Badge variant="secondary">
+                                  {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
+                                </Badge>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveAvailability(slot.id)}
+                                  disabled={deleteAvailabilityMutation.isPending}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-gray-400 text-sm">No availability</span>
+                          )}
+                        </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -257,79 +287,19 @@ const TutorAvailability = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total Hours</span>
-                  <span className="font-semibold">24</span>
+                  <span className="text-gray-600">Available Slots</span>
+                  <span className="font-semibold">{availability?.length || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Bookings</span>
-                  <span className="font-semibold">18</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Available Slots</span>
-                  <span className="font-semibold">6</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Group Classes</span>
                   <span className="font-semibold">3</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Open Slots</span>
+                  <span className="font-semibold">{Math.max(0, (availability?.length || 0) - 3)}</span>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
-
-        {/* Group Classes Section */}
-        <div className="mt-12">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Group Classes</h2>
-              <p className="text-gray-600">Manage your group classes and recurring sessions</p>
-            </div>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Group Class
-            </Button>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {groupClasses.map((groupClass) => (
-              <Card key={groupClass.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{groupClass.title}</CardTitle>
-                    <Badge variant={groupClass.status === 'active' ? 'default' : 'secondary'}>
-                      {groupClass.status}
-                    </Badge>
-                  </div>
-                  <CardDescription>{groupClass.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Clock className="h-4 w-4 mr-2" />
-                      {groupClass.schedule}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Users className="h-4 w-4 mr-2" />
-                      {groupClass.students}/{groupClass.maxStudents} students
-                    </div>
-                    <div className="text-lg font-semibold text-green-600">
-                      {groupClass.price}
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         </div>
       </div>
