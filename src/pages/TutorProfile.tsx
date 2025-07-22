@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,6 +69,7 @@ const TutorProfile = () => {
     }
 
     // Navigate to the booking page with the correct tutor ID
+    console.log('Navigating to book tutor with ID:', tutorId);
     navigate(`/book-tutor/${tutorId}`);
   };
 
@@ -80,6 +80,7 @@ const TutorProfile = () => {
       return;
     }
     
+    console.log('Navigating to book tutor with ID:', tutorId);
     navigate(`/book-tutor/${tutorId}`);
   };
 

@@ -1,102 +1,77 @@
 
 import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar } from "@/components/ui/calendar";
-import { Search, Filter, Star, Users, Clock, Video, Calendar as CalendarIcon, BookOpen, Play, Eye } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Star, Users, Clock, Video, Search, BookOpen, Filter } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const TutorBrowsing = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("all");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedTutor, setSelectedTutor] = useState<string | null>(null);
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("all");
+  const [selectedLevel, setSelectedLevel] = useState("all");
 
-  // Fetch all tutors from database - now with public access
-  const { data: tutors = [], isLoading } = useQuery({
+  // Fetch tutors from database
+  const { data: tutors = [], isLoading, error } = useQuery({
     queryKey: ['tutors'],
     queryFn: async () => {
-      console.log('Fetching tutors...');
+      console.log('Fetching tutors from database...');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'tutor')
-        .order('created_at', { ascending: false });
+        .eq('role', 'tutor');
       
       if (error) {
         console.error('Error fetching tutors:', error);
         throw error;
       }
+      
       console.log('Fetched tutors:', data);
       return data || [];
-    }
+    },
   });
 
-  const subjects = [
-    { id: "all", name: "All Subjects" },
-    { id: "mathematics", name: "Mathematics" },
-    { id: "physics", name: "Physics" },
-    { id: "chemistry", name: "Chemistry" },
-    { id: "english", name: "English" },
-    { id: "biology", name: "Biology" },
-    { id: "programming", name: "Programming" }
-  ];
-
-  // Filter tutors based on search and subject
+  // Filter tutors based on search criteria
   const filteredTutors = tutors.filter(tutor => {
-    // Show all tutors with role 'tutor'
-    if (tutor.role !== 'tutor') return false;
+    const matchesSearch = !searchTerm || 
+      `${tutor.first_name || ''} ${tutor.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (tutor.expertise && tutor.expertise.some((subject: string) => 
+        subject.toLowerCase().includes(searchTerm.toLowerCase())
+      )) ||
+      (tutor.preferred_subjects && tutor.preferred_subjects.some((subject: string) => 
+        subject.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
     
-    // Build search string from available data
-    const searchableText = [
-      tutor.first_name || '',
-      tutor.last_name || '',
-      ...(tutor.expertise || []),
-      ...(tutor.preferred_subjects || []),
-      tutor.bio || '',
-      tutor.education_background || ''
-    ].join(' ').toLowerCase();
-    
-    const matchesSearch = searchQuery === "" || searchableText.includes(searchQuery.toLowerCase());
-    
-    // For subject filtering
     const matchesSubject = selectedSubject === "all" || 
-                          (tutor.expertise && Array.isArray(tutor.expertise) && 
-                           tutor.expertise.some((subject: string) => 
-                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
-                           )) ||
-                          (tutor.preferred_subjects && Array.isArray(tutor.preferred_subjects) && 
-                           tutor.preferred_subjects.some((subject: string) => 
-                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
-                           ));
+      (tutor.expertise && tutor.expertise.includes(selectedSubject)) ||
+      (tutor.preferred_subjects && tutor.preferred_subjects.includes(selectedSubject));
     
     return matchesSearch && matchesSubject;
   });
 
-  const handleBookSession = (tutorId: string) => {
+  const handleBookTutor = (tutorId: string) => {
     if (!user) {
-      toast.error("Please sign in to book a session");
+      toast.error("Please sign in to book a tutor");
       navigate("/auth");
       return;
     }
-    navigate(`/book-tutor?tutor=${tutorId}`);
+    
+    console.log('Navigating to book tutor with ID:', tutorId);
+    navigate(`/book-tutor/${tutorId}`);
   };
 
   const handleViewProfile = (tutorId: string) => {
+    console.log('Navigating to tutor profile with ID:', tutorId);
     navigate(`/tutor-profile/${tutorId}`);
-  };
-
-  const handleViewCalendar = (tutorId: string) => {
-    setSelectedTutor(selectedTutor === tutorId ? null : tutorId);
   };
 
   if (isLoading) {
@@ -110,285 +85,218 @@ const TutorBrowsing = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h2 className="text-xl font-semibold mb-2">Error Loading Tutors</h2>
+            <p className="text-muted-foreground mb-4">
+              There was an error loading the tutors. Please try again later.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <Link to="/">
+          <div className="flex items-center justify-between py-4">
+            <Link to="/">
+              <div className="flex items-center">
                 <BookOpen className="h-8 w-8 text-blue-600" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Browse Tutors</h1>
-                <p className="text-gray-600">Find and book expert tutors for live sessions</p>
+                <div className="ml-3">
+                  <h1 className="text-xl font-bold text-gray-900">Find Your Perfect Tutor</h1>
+                </div>
               </div>
-            </div>
+            </Link>
+            
             <div className="flex items-center space-x-4">
-              <Link to="/">
-                <Button variant="outline" size="sm">Back to Home</Button>
-              </Link>
               {user ? (
-                <Link to="/dashboard">
-                  <Button variant="outline" size="sm">My Dashboard</Button>
-                </Link>
-              ) : (
-                <Link to="/auth">
-                  <Button size="sm">Sign In</Button>
-                </Link>
-              )}
-              <Link to="/live-tutoring/demo-session">
-                <Button size="sm">
-                  <Video className="h-4 w-4 mr-2" />
-                  Try Demo Session
+                <Button onClick={() => navigate('/dashboard')}>
+                  Dashboard
                 </Button>
-              </Link>
+              ) : (
+                <Button onClick={() => navigate('/auth')}>
+                  Sign In
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search and Filter Section */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        {/* Search and Filters */}
+        <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search tutors by name or subject..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tutors or subjects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" className="md:w-auto">
-              <Filter className="h-4 w-4 mr-2" />
-              More Filters
-            </Button>
-          </div>
-
-          {/* Subject Filter */}
-          <div className="flex flex-wrap gap-2">
-            {subjects.map((subject) => (
-              <Button
-                key={subject.id}
-                variant={selectedSubject === subject.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedSubject(subject.id)}
-              >
-                {subject.name}
-              </Button>
-            ))}
+            
+            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+              <SelectTrigger>
+                <SelectValue placeholder="Subject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
+                <SelectItem value="Mathematics">Mathematics</SelectItem>
+                <SelectItem value="Physics">Physics</SelectItem>
+                <SelectItem value="Chemistry">Chemistry</SelectItem>
+                <SelectItem value="Biology">Biology</SelectItem>
+                <SelectItem value="English">English</SelectItem>
+                <SelectItem value="History">History</SelectItem>
+                <SelectItem value="Geography">Geography</SelectItem>
+                <SelectItem value="Computer Science">Computer Science</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+              <SelectTrigger>
+                <SelectValue placeholder="Level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="primary">Primary School</SelectItem>
+                <SelectItem value="secondary">Secondary School</SelectItem>
+                <SelectItem value="university">University</SelectItem>
+                <SelectItem value="professional">Professional</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Tutors List */}
-          <div className="lg:col-span-3">
-            <div className="space-y-6">
-              {filteredTutors.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No tutors found</h3>
-                  <p className="text-gray-600">Try adjusting your search criteria or browse all subjects</p>
-                  <p className="text-sm text-gray-500 mt-2">Total tutors in database: {tutors.length}</p>
-                </div>
-              ) : (
-                filteredTutors.map((tutor) => (
-                  <Card key={tutor.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row gap-6">
-                        {/* Tutor Info */}
-                        <div className="flex-1">
-                          <div className="flex items-start gap-4">
-                            <div 
-                              className="cursor-pointer"
-                              onClick={() => handleViewProfile(tutor.id)}
-                            >
-                              <Avatar className="h-20 w-20 hover:ring-2 hover:ring-blue-500 transition-all">
-                                <AvatarImage src={tutor.profile_photo_url} />
-                                <AvatarFallback>
-                                  {tutor.first_name?.[0]}{tutor.last_name?.[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-2">
-                                <div>
-                                  <h3 
-                                    className="text-xl font-bold hover:text-blue-600 cursor-pointer transition-colors"
-                                    onClick={() => handleViewProfile(tutor.id)}
-                                  >
-                                    {tutor.first_name} {tutor.last_name}
-                                  </h3>
-                                  <Badge variant="secondary" className="mt-1">
-                                    {tutor.kyc_status === 'approved' ? 'Verified Tutor' : 'Tutor'}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center">
-                                  <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                                  <span className="font-medium">4.8</span>
-                                  <span className="text-gray-600 ml-1">(25+ reviews)</span>
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-2 mb-4">
-                                <div className="flex flex-wrap gap-2">
-                                  {(tutor.expertise || []).slice(0, 3).map((subject, index) => (
-                                    <Badge key={index} variant="secondary">{subject}</Badge>
-                                  ))}
-                                  {(tutor.expertise || []).length > 3 && (
-                                    <Badge variant="outline">+{(tutor.expertise || []).length - 3} more</Badge>
-                                  )}
-                                </div>
-                                
-                                <div className="flex items-center gap-4 text-sm text-gray-600">
-                                  <span>{tutor.teaching_experience || "Experienced tutor"}</span>
-                                  {tutor.education_background && (
-                                    <>
-                                      <span>•</span>
-                                      <span>{tutor.education_background}</span>
-                                    </>
-                                  )}
-                                  {tutor.hourly_rate && (
-                                    <>
-                                      <span>•</span>
-                                      <span className="font-semibold text-blue-600">KSh {tutor.hourly_rate}/hour</span>
-                                    </>
-                                  )}
-                                </div>
-                                
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm text-gray-600">Country:</span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {tutor.country || "Kenya"}
-                                  </Badge>
-                                </div>
-                              </div>
+        {/* Results Count */}
+        <div className="mb-6">
+          <p className="text-gray-600">
+            Found {filteredTutors.length} tutor{filteredTutors.length !== 1 ? 's' : ''} matching your criteria
+          </p>
+        </div>
 
-                              <p className="text-gray-700 mb-4 line-clamp-2">
-                                {tutor.bio || "Experienced tutor ready to help you achieve your academic goals."}
-                              </p>
-                              
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center text-sm text-green-600">
-                                  <Clock className="h-4 w-4 mr-1" />
-                                  Available for booking
-                                </div>
-                                
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleViewProfile(tutor.id)}
-                                  >
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View Profile
-                                  </Button>
-                                  <Button 
-                                    size="sm"
-                                    onClick={() => handleBookSession(tutor.id)}
-                                  >
-                                    <Video className="h-4 w-4 mr-2" />
-                                    Book Session
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+        {/* Tutors Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTutors.map((tutor) => {
+            const tutorName = `${tutor.first_name || ''} ${tutor.last_name || ''}`.trim() || 'Anonymous Tutor';
+            const subjects = tutor.expertise || tutor.preferred_subjects || ['General'];
+            const hourlyRate = tutor.hourly_rate || 2500;
+
+            return (
+              <Card key={tutor.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={tutor.profile_photo_url} />
+                      <AvatarFallback>
+                        {tutor.first_name?.[0]}{tutor.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{tutorName}</CardTitle>
+                      <CardDescription>
+                        {tutor.education_background || 'Experienced Educator'}
+                      </CardDescription>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                        <span className="text-sm font-medium">4.8</span>
+                        <span className="text-sm text-gray-500">(25+ reviews)</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Tutor Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Available Tutors</span>
-                  <span className="font-semibold">{filteredTutors.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total Tutors</span>
-                  <span className="font-semibold">{tutors.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Average Rating</span>
-                  <span className="font-semibold">4.7⭐</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total Students</span>
-                  <span className="font-semibold">1,200+</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Popular Subjects */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Popular Subjects</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {["Mathematics", "Physics", "Chemistry", "English", "Biology"].map((subject) => (
-                  <Button
-                    key={subject}
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => setSelectedSubject(subject.toLowerCase())}
-                  >
-                    {subject}
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Help */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Need Help?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-4">
-                  Not sure which tutor to choose? Try our demo session first!
-                </p>
-                <Link to="/live-tutoring/demo-session">
-                  <Button className="w-full" size="sm">
-                    <Video className="h-4 w-4 mr-2" />
-                    Try Demo Session
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {!user && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ready to Start Learning?</CardTitle>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Sign up to book sessions with our expert tutors!
-                  </p>
-                  <Link to="/auth">
-                    <Button className="w-full" size="sm">
-                      Sign Up Now
-                    </Button>
-                  </Link>
+                
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Subjects</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {subjects.slice(0, 3).map((subject, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {subject}
+                        </Badge>
+                      ))}
+                      {subjects.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{subjects.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      <span>100+ students</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span>Available today</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div>
+                      <span className="text-2xl font-bold text-blue-600">
+                        KES {hourlyRate.toLocaleString()}
+                      </span>
+                      <span className="text-gray-500">/hour</span>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewProfile(tutor.id)}
+                      >
+                        View Profile
+                      </Button>
+                      <Button 
+                        size="sm"
+                        onClick={() => handleBookTutor(tutor.id)}
+                      >
+                        <Video className="h-4 w-4 mr-1" />
+                        Book Now
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            )}
-          </div>
+            );
+          })}
         </div>
+
+        {/* No Results */}
+        {filteredTutors.length === 0 && (
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <Filter className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No tutors found</h3>
+              <p className="text-gray-500 mb-4">
+                Try adjusting your search criteria or browse all available tutors.
+              </p>
+              <Button 
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedSubject("all");
+                  setSelectedLevel("all");
+                }}
+              >
+                Clear Filters
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
