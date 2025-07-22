@@ -175,12 +175,9 @@ export const StudentDashboard = () => {
                 <CardDescription>Plan your study schedule</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border"
-                />
+                <div className="text-center">
+                  <p>Calendar placeholder - Coming soon!</p>
+                </div>
               </CardContent>
             </Card>
 

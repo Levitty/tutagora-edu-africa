@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,25 +16,12 @@ import { toast } from "sonner";
 export const SuperAdminDashboard = () => {
   const { user, signOut } = useAuth();
 
-  // Fetch platform stats
-  const { data: platformStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['platform-stats'],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_platform_stats');
-      if (error) {
-        console.error("Error fetching platform stats:", error);
-        throw error;
-      }
-      return data;
-    }
-  });
-
-  // Fetch recent transactions
+  // Fetch recent transactions from payment_transactions table
   const { data: recentTransactions, isLoading: transactionsLoading } = useQuery({
     queryKey: ['recent-transactions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('transactions')
+        .from('payment_transactions')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(5);
@@ -46,13 +34,13 @@ export const SuperAdminDashboard = () => {
     }
   });
 
-  // Fetch KYC documents awaiting approval
+  // Fetch KYC documents awaiting approval - using correct column name
   const { data: kycDocuments, isLoading: kycLoading, refetch: refetchKyc } = useQuery({
     queryKey: ['kyc-documents-pending'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('kyc_documents')
-        .select('id, user_id, document_type, status, created_at')
+        .select('id, tutor_id, document_type, status, submitted_at')
         .eq('status', 'pending')
         .limit(5);
 
@@ -75,7 +63,7 @@ export const SuperAdminDashboard = () => {
       console.error("Error approving KYC document:", error);
     } else {
       toast.success("KYC document approved successfully!");
-      refetchKyc(); // Refresh the KYC documents list
+      refetchKyc();
     }
   };
 
@@ -90,7 +78,7 @@ export const SuperAdminDashboard = () => {
       console.error("Error rejecting KYC document:", error);
     } else {
       toast.success("KYC document rejected successfully!");
-      refetchKyc(); // Refresh the KYC documents list
+      refetchKyc();
     }
   };
 
@@ -131,7 +119,7 @@ export const SuperAdminDashboard = () => {
               <CardDescription>All registered users</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{platformStats?.total_users || 'Loading...'}</div>
+              <div className="text-3xl font-bold">Loading...</div>
             </CardContent>
           </Card>
 
@@ -141,7 +129,7 @@ export const SuperAdminDashboard = () => {
               <CardDescription>Verified tutors on the platform</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{platformStats?.total_tutors || 'Loading...'}</div>
+              <div className="text-3xl font-bold">Loading...</div>
             </CardContent>
           </Card>
 
@@ -151,7 +139,7 @@ export const SuperAdminDashboard = () => {
               <CardDescription>Platform earnings this month</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">KSh {platformStats?.total_revenue || 'Loading...'}</div>
+              <div className="text-3xl font-bold">KSh Loading...</div>
             </CardContent>
           </Card>
         </div>
@@ -174,7 +162,7 @@ export const SuperAdminDashboard = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>User</TableHead>
+                  <TableHead>Booking ID</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Status</TableHead>
@@ -193,11 +181,11 @@ export const SuperAdminDashboard = () => {
                   recentTransactions?.map((transaction) => (
                     <TableRow key={transaction.id}>
                       <TableCell>{transaction.id}</TableCell>
-                      <TableCell>{transaction.user_id}</TableCell>
+                      <TableCell>{transaction.booking_id}</TableCell>
                       <TableCell>KSh {transaction.amount}</TableCell>
                       <TableCell>{new Date(transaction.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="outline">Completed</Badge>
+                        <Badge variant="outline">{transaction.status}</Badge>
                       </TableCell>
                     </TableRow>
                   ))
@@ -224,7 +212,7 @@ export const SuperAdminDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
+                  <TableHead>Tutor ID</TableHead>
                   <TableHead>Document Type</TableHead>
                   <TableHead>Date Uploaded</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
@@ -242,9 +230,9 @@ export const SuperAdminDashboard = () => {
                 ) : (
                   kycDocuments?.map((doc) => (
                     <TableRow key={doc.id}>
-                      <TableCell>{doc.user_id}</TableCell>
+                      <TableCell>{doc.tutor_id}</TableCell>
                       <TableCell>{doc.document_type}</TableCell>
-                      <TableCell>{new Date(doc.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(doc.submitted_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-center">
                         <Button variant="ghost" size="sm" onClick={() => handleApproveKyc(doc.id)}>
                           <CheckCircle className="h-4 w-4 mr-2" />

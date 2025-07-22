@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const TutorDashboard = () => {
   const { user, signOut } = useAuth();
@@ -25,6 +27,8 @@ export const TutorDashboard = () => {
   const [teachingExperience, setTeachingExperience] = useState("");
   const [educationBackground, setEducationBackground] = useState("");
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedExpertise, setSelectedExpertise] = useState<string[]>([]);
+  const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
   const subjectOptions = [
@@ -58,7 +62,9 @@ export const TutorDashboard = () => {
       setHourlyRate(profile.hourly_rate ? profile.hourly_rate.toString() : "");
       setTeachingExperience(profile.teaching_experience || "");
       setEducationBackground(profile.education_background || "");
-      setSelectedSubjects(profile.preferred_subjects || []);
+      setSelectedSubjects(Array.isArray(profile.preferred_subjects) ? profile.preferred_subjects : []);
+      setSelectedExpertise(Array.isArray(profile.expertise) ? profile.expertise : []);
+      setSelectedSpecializations(Array.isArray(profile.specializations) ? profile.specializations : []);
     }
   }, [profile]);
 
@@ -74,26 +80,6 @@ export const TutorDashboard = () => {
     }
   };
 
-  const handleBioChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setBio(e.target.value);
-  };
-
-  const handleHourlyRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHourlyRate(e.target.value);
-  };
-
-  const handleTeachingExperienceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTeachingExperience(e.target.value);
-  };
-
-  const handleEducationBackgroundChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEducationBackground(e.target.value);
-  };
-
-  const handleSubjectsChange = (values: string[]) => {
-    setSelectedSubjects(values);
-  };
-
   const handleSubmitProfile = async () => {
     setUploading(true);
     try {
@@ -107,19 +93,23 @@ export const TutorDashboard = () => {
         teaching_experience?: string;
         education_background?: string;
         preferred_subjects?: string[];
+        expertise?: string[];
+        specializations?: string[];
         profile_photo_url?: string;
       } = {
         bio,
         hourly_rate: parseFloat(hourlyRate),
-        teaching_experience,
-        education_background,
+        teaching_experience: teachingExperience,
+        education_background: educationBackground,
         preferred_subjects: selectedSubjects,
+        expertise: selectedExpertise,
+        specializations: selectedSpecializations,
       };
 
       if (profilePhoto) {
         const filePath = `profile-photos/${user.id}/${profilePhoto.name}`;
         const { error: uploadError } = await supabase.storage
-          .from("avatars")
+          .from("profile-photos")
           .upload(filePath, profilePhoto, {
             cacheControl: "3600",
             upsert: false,
@@ -129,8 +119,11 @@ export const TutorDashboard = () => {
           throw new Error(`Error uploading profile photo: ${uploadError.message}`);
         }
 
-        const publicURL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${filePath}`;
-        updates.profile_photo_url = publicURL;
+        const { data: publicData } = supabase.storage
+          .from("profile-photos")
+          .getPublicUrl(filePath);
+        
+        updates.profile_photo_url = publicData.publicUrl;
       }
 
       const { error } = await supabase
@@ -241,7 +234,27 @@ export const TutorDashboard = () => {
                         <p>{profile?.education_background || "Not specified"}</p>
                       </div>
                       <div>
-                        <span className="text-gray-600">Subjects:</span>
+                        <span className="text-gray-600">Areas of Expertise:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {(profile?.expertise || []).map((item) => (
+                            <Badge key={item} variant="secondary">
+                              {item}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Specializations:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {(profile?.specializations || []).map((item) => (
+                            <Badge key={item} variant="secondary">
+                              {item}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Preferred Subjects:</span>
                         <div className="flex flex-wrap gap-1">
                           {(profile?.preferred_subjects || []).map((subject) => (
                             <Badge key={subject} variant="secondary">
@@ -283,7 +296,7 @@ export const TutorDashboard = () => {
                       id="bio"
                       placeholder="Tell us about yourself"
                       value={bio}
-                      onChange={handleBioChange}
+                      onChange={(e) => setBio(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -293,7 +306,7 @@ export const TutorDashboard = () => {
                       id="hourlyRate"
                       placeholder="Enter your hourly rate"
                       value={hourlyRate}
-                      onChange={handleHourlyRateChange}
+                      onChange={(e) => setHourlyRate(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -303,7 +316,7 @@ export const TutorDashboard = () => {
                       id="teachingExperience"
                       placeholder="Enter your teaching experience"
                       value={teachingExperience}
-                      onChange={handleTeachingExperienceChange}
+                      onChange={(e) => setTeachingExperience(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -313,7 +326,23 @@ export const TutorDashboard = () => {
                       id="educationBackground"
                       placeholder="Enter your education background"
                       value={educationBackground}
-                      onChange={handleEducationBackgroundChange}
+                      onChange={(e) => setEducationBackground(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expertise">Areas of Expertise</Label>
+                    <MultiSelect
+                      options={subjectOptions}
+                      value={selectedExpertise}
+                      onChange={setSelectedExpertise}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="specializations">Specializations</Label>
+                    <MultiSelect
+                      options={subjectOptions}
+                      value={selectedSpecializations}
+                      onChange={setSelectedSpecializations}
                     />
                   </div>
                   <div className="space-y-2">
@@ -321,7 +350,7 @@ export const TutorDashboard = () => {
                     <MultiSelect
                       options={subjectOptions}
                       value={selectedSubjects}
-                      onChange={handleSubjectsChange}
+                      onChange={setSelectedSubjects}
                     />
                   </div>
                   <div className="flex justify-end space-x-2">
