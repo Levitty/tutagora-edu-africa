@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -20,6 +21,8 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("Starting Pesapal payment process...");
+    
     // Initialize Supabase client with service role for database operations
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -27,20 +30,28 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     // Get user from auth header
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Authorization header missing");
+    }
+
     const token = authHeader.replace("Bearer ", "");
     const userSupabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
-    const { data: userData } = await userSupabase.auth.getUser(token);
-    const user = userData.user;
-
-    if (!user) {
+    
+    const { data: userData, error: userError } = await userSupabase.auth.getUser(token);
+    if (userError || !userData.user) {
+      console.error("User authentication error:", userError);
       throw new Error("User not authenticated");
     }
 
+    const user = userData.user;
+    console.log("Authenticated user:", user.id);
+
     const { bookingId, amount, currency = "KES", description = "Tutor Booking Payment" }: PaymentRequest = await req.json();
+    console.log("Payment request data:", { bookingId, amount, currency, description });
 
     if (!bookingId || !amount) {
       throw new Error("Missing required fields: bookingId and amount");
@@ -55,31 +66,50 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (bookingError || !booking) {
+      console.error("Booking verification error:", bookingError);
       throw new Error("Booking not found or access denied");
     }
 
+    console.log("Booking verified:", booking.id);
+
     // Generate unique merchant reference
     const merchantReference = `TUT_${bookingId.substring(0, 8)}_${Date.now()}`;
+    console.log("Generated merchant reference:", merchantReference);
+
+    // Check if required Pesapal environment variables are set
+    const pesapalBaseUrl = Deno.env.get("PESAPAL_BASE_URL");
+    const pesapalConsumerKey = Deno.env.get("PESAPAL_CONSUMER_KEY");
+    const pesapalConsumerSecret = Deno.env.get("PESAPAL_CONSUMER_SECRET");
+
+    if (!pesapalBaseUrl || !pesapalConsumerKey || !pesapalConsumerSecret) {
+      console.error("Missing Pesapal environment variables");
+      throw new Error("Payment service configuration error");
+    }
+
+    console.log("Requesting Pesapal access token...");
 
     // Get Pesapal access token
-    const authResponse = await fetch(`${Deno.env.get("PESAPAL_BASE_URL")}/api/Auth/RequestToken`, {
+    const authResponse = await fetch(`${pesapalBaseUrl}/api/Auth/RequestToken`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
       body: JSON.stringify({
-        consumer_key: Deno.env.get("PESAPAL_CONSUMER_KEY"),
-        consumer_secret: Deno.env.get("PESAPAL_CONSUMER_SECRET"),
+        consumer_key: pesapalConsumerKey,
+        consumer_secret: pesapalConsumerSecret,
       }),
     });
 
     if (!authResponse.ok) {
+      const authError = await authResponse.text();
+      console.error("Pesapal auth failed:", authError);
       throw new Error("Failed to authenticate with Pesapal");
     }
 
     const authData = await authResponse.json();
     const accessToken = authData.token;
+    console.log("Pesapal access token obtained");
 
     // Create payment order
     const orderData = {
@@ -92,8 +122,8 @@ const handler = async (req: Request): Promise<Response> => {
       notification_id: Deno.env.get("PESAPAL_IPN_ID") || "",
       billing_address: {
         email_address: user.email,
-        first_name: booking.student_name || "Student",
-        last_name: "",
+        first_name: booking.student_name || user.user_metadata?.first_name || "Student",
+        last_name: user.user_metadata?.last_name || "",
         line_1: "",
         line_2: "",
         city: "",
@@ -104,7 +134,9 @@ const handler = async (req: Request): Promise<Response> => {
       },
     };
 
-    const orderResponse = await fetch(`${Deno.env.get("PESAPAL_BASE_URL")}/api/Transactions/SubmitOrderRequest`, {
+    console.log("Creating Pesapal order:", orderData);
+
+    const orderResponse = await fetch(`${pesapalBaseUrl}/api/Transactions/SubmitOrderRequest`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -115,10 +147,13 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!orderResponse.ok) {
+      const orderError = await orderResponse.text();
+      console.error("Pesapal order creation failed:", orderError);
       throw new Error("Failed to create payment order");
     }
 
     const orderResult = await orderResponse.json();
+    console.log("Pesapal order created:", orderResult);
 
     // Create payment transaction record
     const { error: transactionError } = await supabaseClient
@@ -135,6 +170,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (transactionError) {
       console.error("Error creating transaction record:", transactionError);
+    } else {
+      console.log("Payment transaction record created");
     }
 
     // Update booking with payment info
@@ -150,6 +187,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (updateError) {
       console.error("Error updating booking:", updateError);
+    } else {
+      console.log("Booking updated with payment info");
     }
 
     console.log("Payment order created successfully:", orderResult);
@@ -172,7 +211,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in pesapal-payment function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: "Check the function logs for more information"
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

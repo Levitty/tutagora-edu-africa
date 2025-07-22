@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { format, addDays, startOfDay, isAfter, isBefore } from "date-fns";
 import { Calendar, Clock, User, DollarSign } from "lucide-react";
@@ -25,8 +26,35 @@ const DURATION_OPTIONS = [
   { value: 120, label: "2 hours" },
 ];
 
-const DAYS_OF_WEEK = [
-  "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+const AVAILABLE_SUBJECTS = [
+  "Mathematics",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "English",
+  "Kiswahili",
+  "History",
+  "Geography",
+  "Computer Science",
+  "Programming",
+  "Web Development",
+  "Data Science",
+  "Business Studies",
+  "Economics",
+  "Accounting",
+  "French",
+  "German",
+  "Spanish",
+  "Art & Design",
+  "Music",
+  "KCSE Preparation",
+  "KCPE Preparation",
+  "University Preparation",
+  "SAT Preparation",
+  "Software Engineering",
+  "Mobile App Development",
+  "Digital Marketing",
+  "Graphic Design"
 ];
 
 export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjects }: BookingFormProps) => {
@@ -86,6 +114,9 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
 
   const totalAmount = (duration / 60) * hourlyRate;
 
+  // Use tutor's subjects or available subjects, prioritizing tutor's subjects
+  const subjectOptions = subjects && subjects.length > 0 ? subjects : AVAILABLE_SUBJECTS;
+
   const handleBooking = async () => {
     if (!selectedSubject || !selectedDate || !selectedTime) {
       toast({
@@ -97,6 +128,15 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
     }
 
     try {
+      console.log('Creating booking with data:', {
+        tutor_id: tutorId,
+        subject: selectedSubject,
+        scheduled_at: `${selectedDate}T${selectedTime}:00`,
+        duration_minutes: duration,
+        hourly_rate: hourlyRate,
+        notes: notes || undefined,
+      });
+
       // Create the booking
       const scheduledAt = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
       
@@ -109,19 +149,40 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
         notes: notes || undefined,
       });
 
+      console.log('Booking created successfully:', booking);
+
       // Initiate Pesapal payment
+      console.log('Initiating Pesapal payment with data:', {
+        bookingId: booking.id,
+        amount: totalAmount,
+        currency: 'KES',
+      });
+
       const paymentResult = await pesapalPayment.mutateAsync({
         bookingId: booking.id,
         amount: totalAmount,
         currency: 'KES',
       });
 
+      console.log('Payment result:', paymentResult);
+
       if (paymentResult.redirect_url) {
         // Redirect to Pesapal payment page
         window.location.href = paymentResult.redirect_url;
+      } else {
+        toast({
+          title: "Payment Error",
+          description: "Unable to redirect to payment page. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Booking error:', error);
+      toast({
+        title: "Booking Error",
+        description: error instanceof Error ? error.message : "Failed to create booking",
+        variant: "destructive",
+      });
     }
   };
 
@@ -152,7 +213,7 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
               <SelectValue placeholder="Select a subject" />
             </SelectTrigger>
             <SelectContent>
-              {subjects.map(subject => (
+              {subjectOptions.map(subject => (
                 <SelectItem key={subject} value={subject}>
                   {subject}
                 </SelectItem>
