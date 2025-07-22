@@ -121,8 +121,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const authData = await authResponse.json();
+    console.log("Auth response data:", authData);
+    
+    if (!authData.token) {
+      console.error("No token in auth response:", authData);
+      throw new Error("Failed to obtain access token from Pesapal");
+    }
+    
     const accessToken = authData.token;
-    console.log("Pesapal access token obtained");
+    console.log("Pesapal access token obtained successfully");
 
     // Create payment order
     const orderData = {
@@ -162,15 +169,32 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify(orderData),
     });
 
+    console.log("Order response status:", orderResponse.status);
+    console.log("Order response headers:", Object.fromEntries(orderResponse.headers.entries()));
+
     if (!orderResponse.ok) {
       const orderError = await orderResponse.text();
       console.error("Pesapal order creation failed:", orderError);
       console.error("Order response status:", orderResponse.status);
-      throw new Error(`Failed to create payment order: ${orderResponse.status} - ${orderError}`);
+      
+      // Try to parse error as JSON for better error messages
+      try {
+        const errorData = JSON.parse(orderError);
+        console.error("Parsed error data:", errorData);
+        throw new Error(`Failed to create payment order: ${orderResponse.status} - ${errorData.error?.message || orderError}`);
+      } catch (parseError) {
+        throw new Error(`Failed to create payment order: ${orderResponse.status} - ${orderError}`);
+      }
     }
 
     const orderResult = await orderResponse.json();
-    console.log("Pesapal order created:", orderResult);
+    console.log("Pesapal order created successfully:", orderResult);
+
+    // Validate that we got the required fields
+    if (!orderResult.order_tracking_id) {
+      console.error("Missing order_tracking_id in response:", orderResult);
+      throw new Error("Invalid response from Pesapal - missing tracking ID");
+    }
 
     // Create payment transaction record
     const { error: transactionError } = await supabaseClient
@@ -208,7 +232,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Booking updated with payment info");
     }
 
-    console.log("Payment order created successfully:", orderResult);
+    console.log("Payment process completed successfully");
 
     return new Response(
       JSON.stringify({
