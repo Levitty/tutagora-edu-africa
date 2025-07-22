@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,11 @@ const TutorBrowsing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Fetch verified tutors from database - simplified query to show all tutors with role 'tutor'
+  // Fetch all tutors from database - now with public access
   const { data: tutors = [], isLoading } = useQuery({
-    queryKey: ['verified-tutors'],
+    queryKey: ['tutors'],
     queryFn: async () => {
-      console.log('Fetching verified tutors...');
+      console.log('Fetching tutors...');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -50,29 +51,33 @@ const TutorBrowsing = () => {
     { id: "programming", name: "Programming" }
   ];
 
-  // Filter tutors based on search and subject - show all tutors with role 'tutor'
+  // Filter tutors based on search and subject
   const filteredTutors = tutors.filter(tutor => {
     // Show all tutors with role 'tutor'
     if (tutor.role !== 'tutor') return false;
     
-    const fullName = `${tutor.first_name || ''} ${tutor.last_name || ''}`.toLowerCase();
-    const matchesSearch = searchQuery === "" || 
-                         fullName.includes(searchQuery.toLowerCase()) ||
-                         (tutor.expertise && Array.isArray(tutor.expertise) && tutor.expertise.some((subject: string) => 
-                           subject.toLowerCase().includes(searchQuery.toLowerCase())
-                         )) ||
-                         (tutor.preferred_subjects && Array.isArray(tutor.preferred_subjects) && tutor.preferred_subjects.some((subject: string) => 
-                           subject.toLowerCase().includes(searchQuery.toLowerCase())
-                         ));
+    // Build search string from available data
+    const searchableText = [
+      tutor.first_name || '',
+      tutor.last_name || '',
+      ...(tutor.expertise || []),
+      ...(tutor.preferred_subjects || []),
+      tutor.bio || '',
+      tutor.education_background || ''
+    ].join(' ').toLowerCase();
     
-    // For subject filtering: if "all" is selected, show all tutors
+    const matchesSearch = searchQuery === "" || searchableText.includes(searchQuery.toLowerCase());
+    
+    // For subject filtering
     const matchesSubject = selectedSubject === "all" || 
-                          (tutor.expertise && Array.isArray(tutor.expertise) && tutor.expertise.some((subject: string) => 
-                            subject.toLowerCase().includes(selectedSubject.toLowerCase())
-                          )) ||
-                          (tutor.preferred_subjects && Array.isArray(tutor.preferred_subjects) && tutor.preferred_subjects.some((subject: string) => 
-                            subject.toLowerCase().includes(selectedSubject.toLowerCase())
-                          ));
+                          (tutor.expertise && Array.isArray(tutor.expertise) && 
+                           tutor.expertise.some((subject: string) => 
+                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
+                           )) ||
+                          (tutor.preferred_subjects && Array.isArray(tutor.preferred_subjects) && 
+                           tutor.preferred_subjects.some((subject: string) => 
+                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
+                           ));
     
     return matchesSearch && matchesSubject;
   });
@@ -125,7 +130,7 @@ const TutorBrowsing = () => {
                 <Button variant="outline" size="sm">Back to Home</Button>
               </Link>
               {user ? (
-                <Link to="/student-dashboard">
+                <Link to="/dashboard">
                   <Button variant="outline" size="sm">My Dashboard</Button>
                 </Link>
               ) : (
@@ -230,9 +235,12 @@ const TutorBrowsing = () => {
                               
                               <div className="space-y-2 mb-4">
                                 <div className="flex flex-wrap gap-2">
-                                  {(tutor.expertise || []).map((subject, index) => (
+                                  {(tutor.expertise || []).slice(0, 3).map((subject, index) => (
                                     <Badge key={index} variant="secondary">{subject}</Badge>
                                   ))}
+                                  {(tutor.expertise || []).length > 3 && (
+                                    <Badge variant="outline">+{(tutor.expertise || []).length - 3} more</Badge>
+                                  )}
                                 </div>
                                 
                                 <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -259,7 +267,9 @@ const TutorBrowsing = () => {
                                 </div>
                               </div>
 
-                              <p className="text-gray-700 mb-4">{tutor.bio || "Experienced tutor ready to help you achieve your academic goals."}</p>
+                              <p className="text-gray-700 mb-4 line-clamp-2">
+                                {tutor.bio || "Experienced tutor ready to help you achieve your academic goals."}
+                              </p>
                               
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center text-sm text-green-600">
@@ -309,6 +319,10 @@ const TutorBrowsing = () => {
                   <span className="font-semibold">{filteredTutors.length}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-gray-600">Total Tutors</span>
+                  <span className="font-semibold">{tutors.length}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-gray-600">Average Rating</span>
                   <span className="font-semibold">4.7⭐</span>
                 </div>
@@ -355,6 +369,24 @@ const TutorBrowsing = () => {
                 </Link>
               </CardContent>
             </Card>
+
+            {!user && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ready to Start Learning?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Sign up to book sessions with our expert tutors!
+                  </p>
+                  <Link to="/auth">
+                    <Button className="w-full" size="sm">
+                      Sign Up Now
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
