@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,7 @@ const TutorBrowsing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Fetch verified tutors from database
+  // Fetch verified tutors from database - simplified query to show all tutors with role 'tutor'
   const { data: tutors = [], isLoading } = useQuery({
     queryKey: ['verified-tutors'],
     queryFn: async () => {
@@ -30,8 +29,6 @@ const TutorBrowsing = () => {
         .from('profiles')
         .select('*')
         .eq('role', 'tutor')
-        .eq('kyc_status', 'approved')
-        .not('hourly_rate', 'is', null)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -53,12 +50,12 @@ const TutorBrowsing = () => {
     { id: "programming", name: "Programming" }
   ];
 
-  // Filter tutors based on search and subject - show all approved tutors
+  // Filter tutors based on search and subject - show all tutors with role 'tutor'
   const filteredTutors = tutors.filter(tutor => {
-    // Only show approved tutors
-    if (tutor.kyc_status !== 'approved') return false;
+    // Show all tutors with role 'tutor'
+    if (tutor.role !== 'tutor') return false;
     
-    const fullName = `${tutor.first_name} ${tutor.last_name}`.toLowerCase();
+    const fullName = `${tutor.first_name || ''} ${tutor.last_name || ''}`.toLowerCase();
     const matchesSearch = searchQuery === "" || 
                          fullName.includes(searchQuery.toLowerCase()) ||
                          (tutor.expertise && Array.isArray(tutor.expertise) && tutor.expertise.some((subject: string) => 
@@ -68,7 +65,7 @@ const TutorBrowsing = () => {
                            subject.toLowerCase().includes(searchQuery.toLowerCase())
                          ));
     
-    // For subject filtering: if "all" is selected, show all approved tutors
+    // For subject filtering: if "all" is selected, show all tutors
     const matchesSubject = selectedSubject === "all" || 
                           (tutor.expertise && Array.isArray(tutor.expertise) && tutor.expertise.some((subject: string) => 
                             subject.toLowerCase().includes(selectedSubject.toLowerCase())
@@ -102,7 +99,7 @@ const TutorBrowsing = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading verified tutors...</p>
+          <p className="text-gray-600">Loading tutors...</p>
         </div>
       </div>
     );
@@ -190,6 +187,7 @@ const TutorBrowsing = () => {
                   <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No tutors found</h3>
                   <p className="text-gray-600">Try adjusting your search criteria or browse all subjects</p>
+                  <p className="text-sm text-gray-500 mt-2">Total tutors in database: {tutors.length}</p>
                 </div>
               ) : (
                 filteredTutors.map((tutor) => (
@@ -220,7 +218,7 @@ const TutorBrowsing = () => {
                                     {tutor.first_name} {tutor.last_name}
                                   </h3>
                                   <Badge variant="secondary" className="mt-1">
-                                    Verified Tutor
+                                    {tutor.kyc_status === 'approved' ? 'Verified Tutor' : 'Tutor'}
                                   </Badge>
                                 </div>
                                 <div className="flex items-center">

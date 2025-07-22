@@ -56,6 +56,9 @@ export const TutorDashboard = () => {
     { value: "arabic", label: "Arabic" }
   ];
 
+  // Convert subject options to string array for MultiSelect component
+  const subjectStrings = subjectOptions.map(option => option.label);
+
   useEffect(() => {
     if (profile) {
       setBio(profile.bio || "");
@@ -332,7 +335,7 @@ export const TutorDashboard = () => {
                   <div className="space-y-2">
                     <Label htmlFor="expertise">Areas of Expertise</Label>
                     <MultiSelect
-                      options={subjectOptions}
+                      options={subjectStrings}
                       value={selectedExpertise}
                       onChange={setSelectedExpertise}
                     />
@@ -340,7 +343,7 @@ export const TutorDashboard = () => {
                   <div className="space-y-2">
                     <Label htmlFor="specializations">Specializations</Label>
                     <MultiSelect
-                      options={subjectOptions}
+                      options={subjectStrings}
                       value={selectedSpecializations}
                       onChange={setSelectedSpecializations}
                     />
@@ -348,7 +351,7 @@ export const TutorDashboard = () => {
                   <div className="space-y-2">
                     <Label htmlFor="subjects">Preferred Subjects</Label>
                     <MultiSelect
-                      options={subjectOptions}
+                      options={subjectStrings}
                       value={selectedSubjects}
                       onChange={setSelectedSubjects}
                     />
