@@ -1,28 +1,35 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useVerifyPayment } from "@/hooks/useBookings";
+import { useVerifyPaystackPayment } from "@/hooks/useBookings";
 
 export default function PaymentCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'failed'>('loading');
-  const verifyPayment = useVerifyPayment();
+  const verifyPayment = useVerifyPaystackPayment();
 
-  const orderTrackingId = searchParams.get('OrderTrackingId');
-  const merchantReference = searchParams.get('OrderMerchantReference');
+  const reference = searchParams.get('reference');
+  const provider = searchParams.get('provider');
 
   useEffect(() => {
     const verifyPaymentStatus = async () => {
-      if (!orderTrackingId) {
+      if (!reference) {
         setVerificationStatus('failed');
         return;
       }
 
       try {
-        const result = await verifyPayment.mutateAsync(orderTrackingId);
+        let result;
+        if (provider === 'paystack') {
+          result = await verifyPayment.mutateAsync(reference);
+        } else {
+          // Fallback for legacy Pesapal payments
+          result = await verifyPayment.mutateAsync(reference);
+        }
         
         if (result.payment_status === 'paid') {
           setVerificationStatus('success');
@@ -36,7 +43,7 @@ export default function PaymentCallback() {
     };
 
     verifyPaymentStatus();
-  }, [orderTrackingId, verifyPayment]);
+  }, [reference, provider, verifyPayment]);
 
   const handleContinue = () => {
     if (verificationStatus === 'success') {
@@ -72,7 +79,7 @@ export default function PaymentCallback() {
         <CardContent className="text-center space-y-4">
           {verificationStatus === 'loading' && (
             <p className="text-muted-foreground">
-              Please wait while we verify your payment with Pesapal...
+              Please wait while we verify your payment with {provider === 'paystack' ? 'Paystack' : 'our payment provider'}...
             </p>
           )}
           
@@ -84,9 +91,9 @@ export default function PaymentCallback() {
               <p className="text-muted-foreground text-sm">
                 You will receive a confirmation email shortly. You can view your booking details in your dashboard.
               </p>
-              {merchantReference && (
+              {reference && (
                 <p className="text-xs text-muted-foreground">
-                  Reference: {merchantReference}
+                  Reference: {reference}
                 </p>
               )}
             </div>
@@ -100,9 +107,9 @@ export default function PaymentCallback() {
               <p className="text-muted-foreground text-sm">
                 Your payment may still be processing. Please check your booking status or contact support if you need assistance.
               </p>
-              {orderTrackingId && (
+              {reference && (
                 <p className="text-xs text-muted-foreground">
-                  Tracking ID: {orderTrackingId}
+                  Reference: {reference}
                 </p>
               )}
             </div>

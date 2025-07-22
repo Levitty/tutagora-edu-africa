@@ -124,14 +124,14 @@ export const useUpdateBooking = () => {
   });
 };
 
-export const usePesapalPayment = () => {
+export const usePaystackPayment = () => {
   return useMutation({
-    mutationFn: async ({ bookingId, amount, currency = 'KES' }: { 
+    mutationFn: async ({ bookingId, amount, currency = 'NGN' }: { 
       bookingId: string; 
       amount: number; 
       currency?: string; 
     }) => {
-      const { data, error } = await supabase.functions.invoke('pesapal-payment', {
+      const { data, error } = await supabase.functions.invoke('paystack-payment', {
         body: { bookingId, amount, currency }
       });
       
@@ -148,13 +148,13 @@ export const usePesapalPayment = () => {
   });
 };
 
-export const useVerifyPayment = () => {
+export const useVerifyPaystackPayment = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (orderTrackingId: string) => {
-      const { data, error } = await supabase.functions.invoke('verify-pesapal-payment', {
-        body: { orderTrackingId }
+    mutationFn: async (reference: string) => {
+      const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
+        body: { reference }
       });
       
       if (error) throw error;
@@ -165,3 +165,7 @@ export const useVerifyPayment = () => {
     },
   });
 };
+
+// Keep the old Pesapal hooks for backward compatibility
+export const usePesapalPayment = usePaystackPayment;
+export const useVerifyPayment = useVerifyPaystackPayment;

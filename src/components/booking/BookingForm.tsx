@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format, addDays, startOfDay, isAfter, isBefore } from "date-fns";
 import { Calendar, Clock, User, DollarSign } from "lucide-react";
@@ -8,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useCreateBooking, usePesapalPayment } from "@/hooks/useBookings";
+import { useCreateBooking, usePaystackPayment } from "@/hooks/useBookings";
 import { useTutorAvailability } from "@/hooks/useTutorAvailability";
 import { toast } from "@/hooks/use-toast";
 
@@ -66,7 +65,7 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
 
   const { data: availability = [] } = useTutorAvailability(tutorId);
   const createBooking = useCreateBooking();
-  const pesapalPayment = usePesapalPayment();
+  const paystackPayment = usePaystackPayment();
 
   // Generate available dates (next 30 days)
   const availableDates = Array.from({ length: 30 }, (_, i) => {
@@ -151,24 +150,24 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
 
       console.log('Booking created successfully:', booking);
 
-      // Initiate Pesapal payment
-      console.log('Initiating Pesapal payment with data:', {
+      // Initiate Paystack payment
+      console.log('Initiating Paystack payment with data:', {
         bookingId: booking.id,
         amount: totalAmount,
-        currency: 'KES',
+        currency: 'NGN',
       });
 
-      const paymentResult = await pesapalPayment.mutateAsync({
+      const paymentResult = await paystackPayment.mutateAsync({
         bookingId: booking.id,
         amount: totalAmount,
-        currency: 'KES',
+        currency: 'NGN',
       });
 
       console.log('Payment result:', paymentResult);
 
-      if (paymentResult.redirect_url) {
-        // Redirect to Pesapal payment page
-        window.location.href = paymentResult.redirect_url;
+      if (paymentResult.authorization_url) {
+        // Redirect to Paystack payment page
+        window.location.href = paymentResult.authorization_url;
       } else {
         toast({
           title: "Payment Error",
@@ -291,7 +290,7 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
         <div className="bg-muted p-4 rounded-lg space-y-2">
           <div className="flex justify-between items-center">
             <span>Hourly Rate:</span>
-            <span>KES {hourlyRate.toLocaleString()}</span>
+            <span>₦ {hourlyRate.toLocaleString()}</span>
           </div>
           <div className="flex justify-between items-center">
             <span>Duration:</span>
@@ -299,21 +298,21 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
           </div>
           <div className="flex justify-between items-center font-semibold text-lg border-t pt-2">
             <span>Total Amount:</span>
-            <span>KES {totalAmount.toLocaleString()}</span>
+            <span>₦ {totalAmount.toLocaleString()}</span>
           </div>
         </div>
 
         {/* Book Button */}
         <Button 
           onClick={handleBooking}
-          disabled={!selectedSubject || !selectedDate || !selectedTime || createBooking.isPending || pesapalPayment.isPending}
+          disabled={!selectedSubject || !selectedDate || !selectedTime || createBooking.isPending || paystackPayment.isPending}
           className="w-full"
           size="lg"
         >
-          {createBooking.isPending || pesapalPayment.isPending ? (
+          {createBooking.isPending || paystackPayment.isPending ? (
             "Processing..."
           ) : (
-            "Book & Pay with Pesapal"
+            "Book & Pay with Paystack"
           )}
         </Button>
       </CardContent>
