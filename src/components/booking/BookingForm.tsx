@@ -160,7 +160,7 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
       const paymentResult = await paystackPayment.mutateAsync({
         bookingId: booking.id,
         amount: totalAmount,
-        currency: 'NGN',
+        currency: 'KES',
       });
 
       console.log('Payment result:', paymentResult);
@@ -290,7 +290,7 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
         <div className="bg-muted p-4 rounded-lg space-y-2">
           <div className="flex justify-between items-center">
             <span>Hourly Rate:</span>
-            <span>₦ {hourlyRate.toLocaleString()}</span>
+            <span>KSh {hourlyRate.toLocaleString()}</span>
           </div>
           <div className="flex justify-between items-center">
             <span>Duration:</span>
@@ -298,7 +298,7 @@ export const BookingForm = ({ tutorId, tutorName, tutorPhoto, hourlyRate, subjec
           </div>
           <div className="flex justify-between items-center font-semibold text-lg border-t pt-2">
             <span>Total Amount:</span>
-            <span>₦ {totalAmount.toLocaleString()}</span>
+            <span>KSh {totalAmount.toLocaleString()}</span>
           </div>
         </div>
 

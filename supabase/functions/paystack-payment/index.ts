@@ -50,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
     const user = userData.user;
     console.log("Authenticated user:", user.id);
 
-    const { bookingId, amount, currency = "NGN", description = "Tutor Booking Payment" }: PaymentRequest = await req.json();
+    const { bookingId, amount, currency = "KES", description = "Tutor Booking Payment" }: PaymentRequest = await req.json();
     console.log("Payment request data:", { bookingId, amount, currency, description });
 
     if (!bookingId || !amount) {
@@ -63,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
       .select("*")
       .eq("id", bookingId)
       .eq("student_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (bookingError || !booking) {
       console.error("Booking verification error:", bookingError);
