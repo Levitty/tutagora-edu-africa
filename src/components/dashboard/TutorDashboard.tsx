@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyAvailability, useCreateAvailability } from "@/hooks/useTutorAvailability";
+import { useBookings } from "@/hooks/useBookings";
 
 const SUBJECTS = [
   "Mathematics", "English", "Physics", "Chemistry", "Biology", "History", 
@@ -38,6 +39,7 @@ export const TutorDashboard = () => {
   const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useProfile();
   const { data: availability } = useMyAvailability();
   const createAvailabilityMutation = useCreateAvailability();
+  const { data: bookings, isLoading: bookingsLoading } = useBookings();
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
@@ -51,25 +53,33 @@ export const TutorDashboard = () => {
   const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  // Mock data for bookings and earnings
-  const recentBookings = [
-    {
-      id: 1,
-      student: "John Kamau",
-      subject: "Mathematics",
-      date: "Dec 15, 2024",
-      time: "14:00-15:00",
-      status: "confirmed" as const
-    },
-    {
-      id: 2,
-      student: "Sarah Oduya",
-      subject: "Physics", 
-      date: "Dec 16, 2024",
-      time: "16:00-17:00",
-      status: "pending" as const
-    }
-  ];
+  // Filter bookings for this tutor
+  const tutorBookings = bookings?.filter(booking => booking.tutor_id === user?.id) || [];
+  const recentBookings = tutorBookings.slice(0, 10).map(booking => {
+    const student = booking.student as any;
+    return {
+      id: booking.id,
+      student: student?.first_name && student?.last_name 
+        ? `${student.first_name} ${student.last_name}` 
+        : 'Unknown Student',
+      subject: booking.subject,
+      date: new Date(booking.scheduled_at).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      time: `${new Date(booking.scheduled_at).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })}-${new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })}`,
+      status: booking.status as 'pending' | 'confirmed' | 'cancelled' | 'completed',
+      payment_status: booking.payment_status,
+      amount: booking.total_amount
+    };
+  });
 
   const quickStats = {
     totalEarnings: 45000,
@@ -544,20 +554,34 @@ export const TutorDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentBookings.map((booking) => (
-                    <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-semibold">{booking.student}</h4>
-                        <p className="text-sm text-gray-600">{booking.subject}</p>
-                        <p className="text-sm text-gray-500">{booking.date} • {booking.time}</p>
-                      </div>
-                      <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
-                        {booking.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
+                {bookingsLoading ? (
+                  <div className="text-center">Loading bookings...</div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentBookings.length === 0 ? (
+                      <p className="text-gray-500 text-center">No bookings yet.</p>
+                    ) : (
+                      recentBookings.map((booking) => (
+                        <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{booking.student}</h4>
+                            <p className="text-sm text-gray-600">{booking.subject}</p>
+                            <p className="text-sm text-gray-500">{booking.date} • {booking.time}</p>
+                            <p className="text-sm font-medium text-green-600">KSh {booking.amount?.toFixed(2)}</p>
+                          </div>
+                          <div className="flex flex-col items-end space-y-1">
+                            <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                              {booking.status}
+                            </Badge>
+                            <Badge variant={booking.payment_status === 'paid' ? 'default' : 'destructive'}>
+                              {booking.payment_status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
