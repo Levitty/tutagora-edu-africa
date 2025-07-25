@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -59,6 +58,8 @@ const handler = async (req: Request): Promise<Response> => {
     const paymentData = verifyResult.data;
     const paymentStatus = paymentData.status === "success" ? "paid" : "failed";
     
+    console.log("Payment status determined:", paymentStatus);
+
     // Update payment transaction
     const { error: transactionError } = await supabaseClient
       .from("payment_transactions")
@@ -70,20 +71,98 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (transactionError) {
       console.error("Error updating transaction:", transactionError);
+    } else {
+      console.log("Transaction updated successfully");
     }
 
     // Update booking status
-    const { error: bookingError } = await supabaseClient
+    const { data: booking, error: bookingError } = await supabaseClient
       .from("bookings")
       .update({
         payment_status: paymentStatus,
         status: paymentStatus === "paid" ? "confirmed" : "pending",
         updated_at: new Date().toISOString(),
       })
-      .eq("pesapal_merchant_reference", reference);
+      .eq("pesapal_merchant_reference", reference)
+      .select(`
+        *,
+        tutor:profiles!bookings_tutor_id_fkey(first_name, last_name, profile_photo_url),
+        student:profiles!bookings_student_id_fkey(first_name, last_name, profile_photo_url)
+      `)
+      .single();
 
     if (bookingError) {
       console.error("Error updating booking:", bookingError);
+      throw new Error("Failed to update booking status");
+    }
+
+    console.log("Booking updated successfully:", booking);
+
+    // If payment successful, send confirmation emails and create earnings record
+    if (paymentStatus === "paid" && booking) {
+      console.log("Processing successful payment...");
+      
+      // Get user emails
+      const { data: authUsers, error: authError } = await supabaseClient.auth.admin.listUsers();
+      if (authError) {
+        console.error("Error getting auth users:", authError);
+      }
+
+      const studentUser = authUsers?.users?.find(user => user.id === booking.student_id);
+      const tutorUser = authUsers?.users?.find(user => user.id === booking.tutor_id);
+
+      if (studentUser && tutorUser) {
+        // Send confirmation emails
+        try {
+          await supabaseClient.functions.invoke('send-booking-confirmation', {
+            body: {
+              booking,
+              studentEmail: studentUser.email,
+              tutorEmail: tutorUser.email,
+              paymentData
+            }
+          });
+          console.log("Confirmation emails initiated");
+        } catch (emailError) {
+          console.error("Error sending confirmation emails:", emailError);
+          // Don't fail the whole process if email fails
+        }
+      }
+
+      // Create earnings record for tutor
+      try {
+        const { error: earningsError } = await supabaseClient
+          .from("analytics")
+          .insert({
+            metric_name: "tutor_earnings",
+            metric_value: booking.total_amount,
+            metric_date: new Date().toISOString().split('T')[0],
+          });
+
+        if (earningsError) {
+          console.error("Error creating earnings record:", earningsError);
+        } else {
+          console.log("Earnings record created");
+        }
+      } catch (earningsError) {
+        console.error("Error processing earnings:", earningsError);
+      }
+
+      // Update tutor profile earnings if it exists
+      try {
+        const { data: currentProfile } = await supabaseClient
+          .from("profiles")
+          .select("id")
+          .eq("id", booking.tutor_id)
+          .single();
+
+        if (currentProfile) {
+          // We could add a total_earnings field to profiles if needed
+          console.log("Tutor profile found for earnings update");
+        }
+      } catch (profileError) {
+        console.error("Error checking tutor profile:", profileError);
+      }
     }
 
     console.log("Payment verification completed:", paymentStatus);
@@ -93,6 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
         success: true,
         payment_status: paymentStatus,
         transaction_data: paymentData,
+        booking: booking,
       }),
       {
         status: 200,

@@ -81,12 +81,25 @@ export const TutorDashboard = () => {
     };
   });
 
+  // Calculate real earnings from confirmed bookings
+  const confirmedBookings = tutorBookings.filter(booking => booking.payment_status === 'paid');
+  const totalEarnings = confirmedBookings.reduce((sum, booking) => sum + Number(booking.total_amount), 0);
+  const thisMonthStart = new Date();
+  thisMonthStart.setDate(1);
+  const thisMonthEarnings = confirmedBookings
+    .filter(booking => new Date(booking.created_at) >= thisMonthStart)
+    .reduce((sum, booking) => sum + Number(booking.total_amount), 0);
+  const upcomingBookings = tutorBookings.filter(booking => 
+    booking.status === 'confirmed' && new Date(booking.scheduled_at) > new Date()
+  );
+  
   const quickStats = {
-    totalEarnings: 45000,
-    monthlyEarnings: 12500,
-    totalSessions: 78,
-    upcomingSessions: 5,
-    completionRate: 98
+    totalEarnings,
+    monthlyEarnings: thisMonthEarnings,
+    totalSessions: tutorBookings.length,
+    upcomingSessions: upcomingBookings.length,
+    completionRate: tutorBookings.length > 0 ? 
+      Math.round((tutorBookings.filter(b => b.status === 'completed').length / tutorBookings.length) * 100) : 0
   };
 
   useEffect(() => {
