@@ -64,11 +64,23 @@ export const useBookings = () => {
         .in('id', userIds);
 
       // Combine bookings with profile data
-      const bookingsWithProfiles = bookingsData.map(booking => ({
-        ...booking,
-        student: profiles?.find(p => p.id === booking.student_id),
-        tutor: profiles?.find(p => p.id === booking.tutor_id)
-      }));
+      const bookingsWithProfiles = bookingsData.map(booking => {
+        const student = profiles?.find(p => p.id === booking.student_id);
+        const tutor = profiles?.find(p => p.id === booking.tutor_id);
+        console.log('Booking processing:', {
+          bookingId: booking.id,
+          studentId: booking.student_id,
+          tutorId: booking.tutor_id,
+          studentProfile: student,
+          tutorProfile: tutor,
+          allProfiles: profiles
+        });
+        return {
+          ...booking,
+          student,
+          tutor
+        };
+      });
       
       return bookingsWithProfiles;
     },

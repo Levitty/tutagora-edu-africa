@@ -50,15 +50,18 @@ export const TutorDashboard = () => {
         .from('live_sessions')
         .insert({
           tutor_id: user?.id,
-          title: `${booking.subject} Session with ${booking.student}`,
+          title: `${booking.subject} Session with ${booking.student?.first_name || 'Student'}`,
           scheduled_at: booking.scheduled_at,
           duration_minutes: booking.duration_minutes,
-          status: 'live'
+          status: 'active'
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Redirect to live classes page
+      window.open('https://tutagora.com/tutor-dashboard', '_blank');
 
       toast.success("Class Started", {
         description: "Live session has been created successfully. Students can now join.",
@@ -622,13 +625,13 @@ export const TutorDashboard = () => {
                              {booking.payment_status === 'paid' && (
                                <Button 
                                  size="sm" 
-                                 onClick={() => handleStartClass({
-                                   id: booking.id,
-                                   subject: booking.subject,
-                                   scheduled_at: new Date(booking.date + ' ' + booking.time.split('-')[0]).toISOString(),
-                                   duration_minutes: 60,
-                                   student: { first_name: booking.student.split(' ')[0] }
-                                 })}
+                                  onClick={() => handleStartClass({
+                                    id: booking.id,
+                                    subject: booking.subject,
+                                    scheduled_at: new Date(booking.date + ' ' + booking.time.split('-')[0]).toISOString(),
+                                    duration_minutes: 60,
+                                    student: booking.student
+                                  })}
                                  className="bg-green-600 hover:bg-green-700"
                                >
                                  Start Class
