@@ -76,24 +76,32 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Update booking status
-    const { data: booking, error: bookingError } = await supabaseClient
+    const { error: bookingError } = await supabaseClient
       .from("bookings")
       .update({
         payment_status: paymentStatus,
         status: paymentStatus === "paid" ? "confirmed" : "pending",
         updated_at: new Date().toISOString(),
       })
-      .eq("pesapal_merchant_reference", reference)
-      .select(`
-        *,
-        tutor:profiles!bookings_tutor_id_fkey(first_name, last_name, profile_photo_url),
-        student:profiles!bookings_student_id_fkey(first_name, last_name, profile_photo_url)
-      `)
-      .single();
+      .eq("pesapal_merchant_reference", reference);
 
     if (bookingError) {
       console.error("Error updating booking:", bookingError);
       throw new Error("Failed to update booking status");
+    }
+
+    console.log("Booking updated successfully");
+
+    // Get the updated booking data separately
+    const { data: booking, error: fetchError } = await supabaseClient
+      .from("bookings")
+      .select("*")
+      .eq("pesapal_merchant_reference", reference)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching booking:", fetchError);
+      throw new Error("Failed to fetch updated booking");
     }
 
     console.log("Booking updated successfully:", booking);
