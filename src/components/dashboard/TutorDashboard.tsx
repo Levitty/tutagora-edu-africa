@@ -90,7 +90,8 @@ export const TutorDashboard = () => {
     .filter(booking => new Date(booking.created_at) >= thisMonthStart)
     .reduce((sum, booking) => sum + Number(booking.total_amount), 0);
   const upcomingBookings = tutorBookings.filter(booking => 
-    booking.status === 'confirmed' && new Date(booking.scheduled_at) > new Date()
+    (booking.status === 'confirmed' || booking.payment_status === 'paid') && 
+    new Date(booking.scheduled_at) > new Date()
   );
   
   const quickStats = {

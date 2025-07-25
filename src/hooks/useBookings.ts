@@ -39,13 +39,9 @@ export const useBookings = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      const { data, error } = await supabase
+      const { data: bookingsData, error } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          tutor:profiles!bookings_tutor_id_fkey(first_name, last_name, profile_photo_url),
-          student:profiles!bookings_student_id_fkey(first_name, last_name, profile_photo_url)
-        `)
+        .select('*')
         .or(`student_id.eq.${user.id},tutor_id.eq.${user.id}`)
         .order('scheduled_at', { ascending: true });
       
@@ -53,8 +49,28 @@ export const useBookings = () => {
         console.error('Error fetching bookings:', error);
         throw error;
       }
+
+      if (!bookingsData?.length) return [];
+
+      // Fetch user profiles for students and tutors
+      const userIds = [...new Set([
+        ...bookingsData.map(b => b.student_id),
+        ...bookingsData.map(b => b.tutor_id)
+      ])];
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, profile_photo_url')
+        .in('id', userIds);
+
+      // Combine bookings with profile data
+      const bookingsWithProfiles = bookingsData.map(booking => ({
+        ...booking,
+        student: profiles?.find(p => p.id === booking.student_id),
+        tutor: profiles?.find(p => p.id === booking.tutor_id)
+      }));
       
-      return data || [];
+      return bookingsWithProfiles;
     },
     enabled: !!user?.id,
   });

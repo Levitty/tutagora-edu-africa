@@ -150,7 +150,22 @@ const handler = async (req: Request): Promise<Response> => {
         if (earningsError) {
           console.error("Error creating earnings record:", earningsError);
         } else {
-          console.log("Earnings record created");
+          console.log("Earnings record created successfully");
+        }
+
+        // Also create a booking completion record
+        const { error: completionError } = await supabaseClient
+          .from("analytics")
+          .insert({
+            metric_name: "booking_completed",
+            metric_value: 1,
+            metric_date: new Date().toISOString().split('T')[0],
+          });
+
+        if (completionError) {
+          console.error("Error creating completion record:", completionError);
+        } else {
+          console.log("Booking completion record created");
         }
       } catch (earningsError) {
         console.error("Error processing earnings:", earningsError);
