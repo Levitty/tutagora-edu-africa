@@ -17,6 +17,19 @@ export const useRole = () => {
       console.log('Fetching role for user:', user.id);
       console.log('User email:', user.email);
       
+      // First try the new user_roles table
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      
+      if (!rolesError && rolesData) {
+        console.log('User role from user_roles table:', rolesData.role);
+        return rolesData.role;
+      }
+      
+      // Fallback to profiles table for existing users
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
