@@ -42,6 +42,33 @@ export const TutorDashboard = () => {
   const { data: bookings, isLoading: bookingsLoading } = useBookings();
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+  const handleStartClass = async (booking: any) => {
+    try {
+      // Create a live session
+      const { data: liveSession, error } = await supabase
+        .from('live_sessions')
+        .insert({
+          tutor_id: user?.id,
+          title: `${booking.subject} Session with ${booking.student}`,
+          scheduled_at: booking.scheduled_at,
+          duration_minutes: booking.duration_minutes,
+          status: 'live'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Class Started", {
+        description: "Live session has been created successfully. Students can now join.",
+      });
+    } catch (error: any) {
+      toast.error("Error", {
+        description: error.message || "Failed to start class",
+      });
+    }
+  };
   const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [bio, setBio] = useState("");
@@ -583,14 +610,31 @@ export const TutorDashboard = () => {
                             <p className="text-sm text-gray-500">{booking.date} • {booking.time}</p>
                             <p className="text-sm font-medium text-green-600">KSh {booking.amount?.toFixed(2)}</p>
                           </div>
-                          <div className="flex flex-col items-end space-y-1">
-                            <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
-                              {booking.status}
-                            </Badge>
-                            <Badge variant={booking.payment_status === 'paid' ? 'default' : 'destructive'}>
-                              {booking.payment_status}
-                            </Badge>
-                          </div>
+                           <div className="flex flex-col items-end space-y-1">
+                             <div className="flex space-x-2">
+                               <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                                 {booking.status}
+                               </Badge>
+                               <Badge variant={booking.payment_status === 'paid' ? 'default' : 'destructive'}>
+                                 {booking.payment_status}
+                               </Badge>
+                             </div>
+                             {booking.payment_status === 'paid' && (
+                               <Button 
+                                 size="sm" 
+                                 onClick={() => handleStartClass({
+                                   id: booking.id,
+                                   subject: booking.subject,
+                                   scheduled_at: new Date(booking.date + ' ' + booking.time.split('-')[0]).toISOString(),
+                                   duration_minutes: 60,
+                                   student: { first_name: booking.student.split(' ')[0] }
+                                 })}
+                                 className="bg-green-600 hover:bg-green-700"
+                               >
+                                 Start Class
+                               </Button>
+                             )}
+                           </div>
                         </div>
                       ))
                     )}

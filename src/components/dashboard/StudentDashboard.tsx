@@ -4,33 +4,56 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, BookOpen, Users, Clock, Video, Star, TrendingUp, Award, Search } from "lucide-react";
+import { Calendar, BookOpen, Users, Clock, Video, Star, TrendingUp, Award, Search, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useBookings } from "@/hooks/useBookings";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export const StudentDashboard = () => {
   const { user, signOut } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const { data: bookings = [], isLoading } = useBookings();
 
-  // Mock data for the dashboard
-  const upcomingSessions = [
-    {
-      id: 1,
-      tutor: "Dr. Sarah Johnson",
-      subject: "Mathematics",
-      time: "2:00 PM - 3:00 PM",
-      date: "Today",
-      avatar: "/api/placeholder/40/40"
-    },
-    {
-      id: 2,
-      tutor: "Prof. Michael Chen",
-      subject: "Physics",
-      time: "4:00 PM - 5:00 PM",
-      date: "Tomorrow",
-      avatar: "/api/placeholder/40/40"
+  // Filter bookings for this student that are paid and upcoming
+  const studentBookings = bookings.filter(booking => 
+    booking.student_id === user?.id && 
+    booking.payment_status === 'paid' &&
+    new Date(booking.scheduled_at) > new Date()
+  );
+
+  const handleJoinClass = async (booking: any) => {
+    try {
+      // Check if there's a live session for this booking
+      const { data: liveSession, error } = await supabase
+        .from('live_sessions')
+        .select('*')
+        .eq('tutor_id', booking.tutor_id)
+        .eq('status', 'live')
+        .gte('scheduled_at', new Date(booking.scheduled_at).toISOString())
+        .lte('scheduled_at', new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000).toISOString())
+        .single();
+
+      if (error || !liveSession) {
+        toast({
+          title: "Class Not Started",
+          description: "The tutor hasn't started the class yet. Please wait for them to begin.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Join the live session
+      window.open(`/live-tutoring/${liveSession.id}`, '_blank');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to join class",
+        variant: "destructive",
+      });
     }
-  ];
+  };
 
   const recentCourses = [
     {
@@ -141,24 +164,50 @@ export const StudentDashboard = () => {
                 <CardDescription>Your scheduled tutoring sessions</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {upcomingSessions.length === 0 ? (
+                {isLoading ? (
+                  <p className="text-gray-500">Loading...</p>
+                ) : studentBookings.length === 0 ? (
                   <p className="text-gray-500">No upcoming sessions scheduled.</p>
                 ) : (
-                  upcomingSessions.map((session) => (
-                    <div key={session.id} className="flex items-center justify-between">
+                  studentBookings.map((booking) => (
+                    <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-4">
                         <Avatar>
-                          <AvatarImage src={session.avatar} alt={session.tutor} />
-                          <AvatarFallback>{session.tutor.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                          <AvatarImage 
+                            src={booking.tutor?.profile_photo_url} 
+                            alt={booking.tutor?.first_name} 
+                          />
+                          <AvatarFallback>
+                            {booking.tutor?.first_name?.[0]}{booking.tutor?.last_name?.[0]}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h3 className="font-semibold">{session.tutor}</h3>
-                          <p className="text-sm text-gray-500">{session.subject}</p>
+                          <h3 className="font-semibold">
+                            {booking.tutor?.first_name} {booking.tutor?.last_name}
+                          </h3>
+                          <p className="text-sm text-gray-500">{booking.subject}</p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(booking.scheduled_at).toLocaleDateString()} at {new Date(booking.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
                         </div>
                       </div>
-                      <div>
-                        <Badge variant="secondary">{session.date}</Badge>
-                        <span className="ml-2 text-sm text-gray-500">{session.time}</span>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="default">Paid</Badge>
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleJoinClass(booking)}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Video className="h-4 w-4 mr-1" />
+                          Join Class
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => toast({ title: "Chat Feature", description: "Chat feature coming soon!" })}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,42 +86,48 @@ const handler = async (req: Request): Promise<Response> => {
       The EduConnect Team</p>
     `;
 
-    // Note: This is a placeholder for email sending
-    // In a real implementation, you would integrate with an email service like Resend, SendGrid, etc.
-    // For now, we'll log the emails that would be sent
-    
-    console.log("Student confirmation email:", {
-      to: studentEmail,
-      subject: "Booking Confirmed - Your Tutoring Session",
-      content: studentEmailContent
-    });
+    // Initialize Resend with API key
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.warn("RESEND_API_KEY not found, logging emails instead of sending");
+      
+      console.log("Student confirmation email:", {
+        to: studentEmail,
+        subject: "Booking Confirmed - Your Tutoring Session",
+        content: studentEmailContent
+      });
 
-    console.log("Tutor confirmation email:", {
-      to: tutorEmail,
-      subject: "New Booking Confirmed - You Have a Student!",
-      content: tutorEmailContent
-    });
+      console.log("Tutor confirmation email:", {
+        to: tutorEmail,
+        subject: "New Booking Confirmed - You Have a Student!",
+        content: tutorEmailContent
+      });
+    } else {
+      const resend = new Resend(resendApiKey);
+      
+      try {
+        // Send student email
+        await resend.emails.send({
+          from: "EduConnect <bookings@resend.dev>",
+          to: [studentEmail],
+          subject: "Booking Confirmed - Your Tutoring Session",
+          html: studentEmailContent,
+        });
+        console.log("Student confirmation email sent successfully");
 
-    // In a real implementation, replace the above logs with actual email sending:
-    /*
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-    
-    // Send student email
-    await resend.emails.send({
-      from: "EduConnect <bookings@yourdomain.com>",
-      to: [studentEmail],
-      subject: "Booking Confirmed - Your Tutoring Session",
-      html: studentEmailContent,
-    });
-
-    // Send tutor email
-    await resend.emails.send({
-      from: "EduConnect <bookings@yourdomain.com>",
-      to: [tutorEmail],
-      subject: "New Booking Confirmed - You Have a Student!",
-      html: tutorEmailContent,
-    });
-    */
+        // Send tutor email
+        await resend.emails.send({
+          from: "EduConnect <bookings@resend.dev>",
+          to: [tutorEmail],
+          subject: "New Booking Confirmed - You Have a Student!",
+          html: tutorEmailContent,
+        });
+        console.log("Tutor confirmation email sent successfully");
+      } catch (emailError: any) {
+        console.error("Failed to send emails:", emailError);
+        // Continue execution even if emails fail
+      }
+    }
 
     console.log("Booking confirmation emails processed successfully");
 
