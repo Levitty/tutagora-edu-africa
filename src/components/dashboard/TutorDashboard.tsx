@@ -61,7 +61,7 @@ export const TutorDashboard = () => {
       if (error) throw error;
 
       // Redirect to live classes page
-      window.open('https://tutagora.com/tutor-dashboard', '_blank');
+      window.open('/live-tutoring', '_blank');
 
       toast.success("Class Started", {
         description: "Live session has been created successfully. Students can now join.",
@@ -85,31 +85,6 @@ export const TutorDashboard = () => {
 
   // Filter bookings for this tutor
   const tutorBookings = bookings?.filter(booking => booking.tutor_id === user?.id) || [];
-  const recentBookings = tutorBookings.slice(0, 10).map(booking => {
-    const student = booking.student as any;
-    return {
-      id: booking.id,
-      student: student?.first_name && student?.last_name 
-        ? `${student.first_name} ${student.last_name}` 
-        : 'Unknown Student',
-      subject: booking.subject,
-      date: new Date(booking.scheduled_at).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      }),
-      time: `${new Date(booking.scheduled_at).toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })}-${new Date(new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60000).toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })}`,
-      status: booking.status as 'pending' | 'confirmed' | 'cancelled' | 'completed',
-      payment_status: booking.payment_status,
-      amount: booking.total_amount
-    };
-  });
 
   // Calculate real earnings from confirmed bookings
   const confirmedBookings = tutorBookings.filter(booking => booking.payment_status === 'paid');
@@ -605,41 +580,41 @@ export const TutorDashboard = () => {
                     {recentBookings.length === 0 ? (
                       <p className="text-gray-500 text-center">No bookings yet.</p>
                     ) : (
-                      recentBookings.map((booking) => (
-                        <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex-1">
-                            <h4 className="font-semibold">{booking.student}</h4>
-                            <p className="text-sm text-gray-600">{booking.subject}</p>
-                            <p className="text-sm text-gray-500">{booking.date} • {booking.time}</p>
-                            <p className="text-sm font-medium text-green-600">KSh {booking.amount?.toFixed(2)}</p>
-                          </div>
-                           <div className="flex flex-col items-end space-y-1">
-                             <div className="flex space-x-2">
-                               <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
-                                 {booking.status}
-                               </Badge>
-                               <Badge variant={booking.payment_status === 'paid' ? 'default' : 'destructive'}>
-                                 {booking.payment_status}
-                               </Badge>
-                             </div>
-                             {booking.payment_status === 'paid' && (
-                               <Button 
-                                 size="sm" 
-                                  onClick={() => handleStartClass({
-                                    id: booking.id,
-                                    subject: booking.subject,
-                                    scheduled_at: new Date(booking.date + ' ' + booking.time.split('-')[0]).toISOString(),
-                                    duration_minutes: 60,
-                                    student: booking.student
-                                  })}
-                                 className="bg-green-600 hover:bg-green-700"
-                               >
-                                 Start Class
-                               </Button>
-                             )}
+                       tutorBookings.slice(0, 10).map((booking) => (
+                         <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
+                           <div className="flex-1">
+                             <h4 className="font-semibold">
+                               {booking.student?.first_name && booking.student?.last_name 
+                                 ? `${booking.student.first_name} ${booking.student.last_name}` 
+                                 : 'Unknown Student'}
+                             </h4>
+                             <p className="text-sm text-gray-600">{booking.subject}</p>
+                             <p className="text-sm text-gray-500">
+                               {new Date(booking.scheduled_at).toLocaleDateString()} • {new Date(booking.scheduled_at).toLocaleTimeString()}
+                             </p>
+                             <p className="text-sm font-medium text-green-600">KSh {booking.total_amount}</p>
                            </div>
-                        </div>
-                      ))
+                            <div className="flex flex-col items-end space-y-1">
+                              <div className="flex space-x-2">
+                                <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                                  {booking.status}
+                                </Badge>
+                                <Badge variant={booking.payment_status === 'paid' ? 'default' : 'destructive'}>
+                                  {booking.payment_status}
+                                </Badge>
+                              </div>
+                              {booking.payment_status === 'paid' && (
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleStartClass(booking)}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  Start Class
+                                </Button>
+                              )}
+                            </div>
+                         </div>
+                       ))
                     )}
                   </div>
                 )}
