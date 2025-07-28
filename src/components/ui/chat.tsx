@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 interface ChatMessage {
@@ -48,24 +48,16 @@ export const Chat = ({ bookingId, otherUserId, otherUserName, otherUserAvatar }:
 
   const fetchMessages = async () => {
     try {
+      // Use raw supabase client instead of typed client to avoid TypeScript errors
       const { data, error } = await supabase
         .from('chat_messages')
-        .select(`
-          *,
-          sender:profiles!sender_id(first_name, last_name, profile_photo_url)
-        `)
+        .select('*')
         .eq('booking_id', bookingId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
 
-      const formattedMessages = data?.map(msg => ({
-        ...msg,
-        sender_name: msg.sender ? `${msg.sender.first_name} ${msg.sender.last_name}` : 'Unknown',
-        sender_avatar: msg.sender?.profile_photo_url
-      })) || [];
-
-      setMessages(formattedMessages);
+      setMessages(data || []);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
     }
@@ -142,7 +134,7 @@ export const Chat = ({ bookingId, otherUserId, otherUserName, otherUserAvatar }:
               >
                 {message.sender_id !== user?.id && (
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={message.sender_avatar || otherUserAvatar} />
+                    <AvatarImage src={otherUserAvatar} />
                     <AvatarFallback>{otherUserName.charAt(0)}</AvatarFallback>
                   </Avatar>
                 )}

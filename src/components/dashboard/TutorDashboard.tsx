@@ -577,7 +577,7 @@ export const TutorDashboard = () => {
                   <div className="text-center">Loading bookings...</div>
                 ) : (
                   <div className="space-y-4">
-                    {recentBookings.length === 0 ? (
+                    {tutorBookings.length === 0 ? (
                       <p className="text-gray-500 text-center">No bookings yet.</p>
                     ) : (
                        tutorBookings.slice(0, 10).map((booking) => (
