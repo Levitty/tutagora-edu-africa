@@ -48,7 +48,6 @@ export const Chat = ({ bookingId, otherUserId, otherUserName, otherUserAvatar }:
 
   const fetchMessages = async () => {
     try {
-      // Use raw supabase client instead of typed client to avoid TypeScript errors
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
@@ -56,7 +55,6 @@ export const Chat = ({ bookingId, otherUserId, otherUserName, otherUserAvatar }:
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-
       setMessages(data || []);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
@@ -141,15 +139,13 @@ export const Chat = ({ bookingId, otherUserId, otherUserName, otherUserAvatar }:
                 <div
                   className={`max-w-[70%] p-2 rounded-lg text-sm ${
                     message.sender_id === user?.id
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-900'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {message.message}
                   <div
-                    className={`text-xs mt-1 ${
-                      message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-500'
-                    }`}
+                    className={`text-xs mt-1 opacity-70`}
                   >
                     {new Date(message.created_at).toLocaleTimeString()}
                   </div>
