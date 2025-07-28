@@ -31,7 +31,9 @@ export default function PaymentCallback() {
           result = await verifyPayment.mutateAsync(reference);
         }
         
-        if (result.payment_status === 'paid') {
+        console.log('Payment verification result:', result);
+        
+        if (result.status === 'success' || result.payment_status === 'paid') {
           setVerificationStatus('success');
         } else {
           setVerificationStatus('failed');

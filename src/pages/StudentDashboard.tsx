@@ -9,42 +9,31 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import AILearningGame from "@/components/ai/AILearningGame";
 import { useCourses } from "@/hooks/useCourses";
 import { useProfile } from "@/hooks/useProfile";
+import { useBookings } from "@/hooks/useBookings";
 
 const StudentDashboard = () => {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const { data: courses = [] } = useCourses();
   const { data: profile } = useProfile();
+  const { data: bookings = [] } = useBookings();
+  
+  // Get upcoming classes from bookings
+  const upcomingClasses = bookings
+    .filter(booking => 
+      booking.payment_status === 'paid' && 
+      new Date(booking.scheduled_at) > new Date()
+    )
+    .slice(0, 5)
+    .map(booking => ({
+      id: booking.id,
+      subject: booking.subject,
+      tutor: booking.tutor ? `${booking.tutor.first_name} ${booking.tutor.last_name}` : 'Unknown Tutor',
+      time: new Date(booking.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date: new Date(booking.scheduled_at).toLocaleDateString(),
+      sessionId: `session-${booking.id}`,
+      channelName: `${booking.student_id}-${booking.subject.toLowerCase()}-${new Date(booking.scheduled_at).toISOString().split('T')[0]}`
+    }));
 
-  // Mock data for demonstration
-  const upcomingClasses = [
-    { 
-      id: 1, 
-      subject: "Mathematics", 
-      tutor: "Dr. Amina Ochieng", 
-      time: "2:00 PM", 
-      date: "Today", 
-      sessionId: "math-101",
-      channelName: "john-mathematics-2025-01-08"
-    },
-    { 
-      id: 2, 
-      subject: "Physics", 
-      tutor: "Prof. Kwame Asante", 
-      time: "4:00 PM", 
-      date: "Tomorrow", 
-      sessionId: "physics-201",
-      channelName: "john-physics-2025-01-09"
-    },
-    { 
-      id: 3, 
-      subject: "Chemistry", 
-      tutor: "Dr. Fatima Ibrahim", 
-      time: "10:00 AM", 
-      date: "Wednesday", 
-      sessionId: "chem-301",
-      channelName: "john-chemistry-2025-01-10"
-    }
-  ];
 
   const recentScores = [
     { subject: "Mathematics", score: 85, date: "Nov 20" },
