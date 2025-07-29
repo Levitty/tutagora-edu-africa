@@ -92,10 +92,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Booking updated successfully");
 
-    // Get the updated booking data separately
+    // Get the updated booking data with profile information
     const { data: booking, error: fetchError } = await supabaseClient
       .from("bookings")
-      .select("*")
+      .select(`
+        *,
+        student:profiles!bookings_student_id_fkey(first_name, last_name, id),
+        tutor:profiles!bookings_tutor_id_fkey(first_name, last_name, id)
+      `)
       .eq("pesapal_merchant_reference", reference)
       .single();
 
@@ -110,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (paymentStatus === "paid" && booking) {
       console.log("Processing successful payment...");
       
-      // Get user emails
+      // Get user emails from auth
       const { data: authUsers, error: authError } = await supabaseClient.auth.admin.listUsers();
       if (authError) {
         console.error("Error getting auth users:", authError);
@@ -119,12 +123,16 @@ const handler = async (req: Request): Promise<Response> => {
       const studentUser = authUsers?.users?.find(user => user.id === booking.student_id);
       const tutorUser = authUsers?.users?.find(user => user.id === booking.tutor_id);
 
-      if (studentUser && tutorUser) {
-        // Send confirmation emails
+      if (studentUser && tutorUser && booking.student && booking.tutor) {
+        // Send confirmation emails with complete booking data including names
         try {
           await supabaseClient.functions.invoke('send-booking-confirmation', {
             body: {
-              booking,
+              booking: {
+                ...booking,
+                student: booking.student,
+                tutor: booking.tutor
+              },
               studentEmail: studentUser.email,
               tutorEmail: tutorUser.email,
               paymentData
@@ -135,6 +143,13 @@ const handler = async (req: Request): Promise<Response> => {
           console.error("Error sending confirmation emails:", emailError);
           // Don't fail the whole process if email fails
         }
+      } else {
+        console.log("Missing user data for emails:", {
+          studentUser: !!studentUser,
+          tutorUser: !!tutorUser,
+          studentProfile: !!booking.student,
+          tutorProfile: !!booking.tutor
+        });
       }
 
       // Create earnings record for tutor
@@ -193,7 +208,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: true,
-        status: 'success',
+        status: paymentStatus === "paid" ? "success" : "failed",
         payment_status: paymentStatus,
         transaction_data: paymentData,
         booking: booking,

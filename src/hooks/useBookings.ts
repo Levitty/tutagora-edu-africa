@@ -20,6 +20,18 @@ export interface Booking {
   notes?: string;
   created_at: string;
   updated_at: string;
+  student?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    profile_photo_url?: string;
+  };
+  tutor?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    profile_photo_url?: string;
+  };
 }
 
 export interface CreateBookingData {
@@ -67,14 +79,6 @@ export const useBookings = () => {
       const bookingsWithProfiles = bookingsData.map(booking => {
         const student = profiles?.find(p => p.id === booking.student_id);
         const tutor = profiles?.find(p => p.id === booking.tutor_id);
-        console.log('Booking processing:', {
-          bookingId: booking.id,
-          studentId: booking.student_id,
-          tutorId: booking.tutor_id,
-          studentProfile: student,
-          tutorProfile: tutor,
-          allProfiles: profiles
-        });
         return {
           ...booking,
           student,
