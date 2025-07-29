@@ -92,14 +92,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Booking updated successfully");
 
-    // Get the updated booking data with profile information
+    // Get the updated booking data and profiles separately 
     const { data: booking, error: fetchError } = await supabaseClient
       .from("bookings")
-      .select(`
-        *,
-        student:profiles!bookings_student_id_fkey(first_name, last_name, id),
-        tutor:profiles!bookings_tutor_id_fkey(first_name, last_name, id)
-      `)
+      .select("*")
       .eq("pesapal_merchant_reference", reference)
       .single();
 
@@ -108,10 +104,30 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to fetch updated booking");
     }
 
-    console.log("Booking updated successfully:", booking);
+    // Fetch student and tutor profiles separately
+    const { data: profiles, error: profilesError } = await supabaseClient
+      .from("profiles")
+      .select("id, first_name, last_name")
+      .in("id", [booking.student_id, booking.tutor_id]);
+
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+    }
+
+    // Attach profiles to booking
+    const student = profiles?.find(p => p.id === booking.student_id);
+    const tutor = profiles?.find(p => p.id === booking.tutor_id);
+    
+    const bookingWithProfiles = {
+      ...booking,
+      student,
+      tutor
+    };
+
+    console.log("Booking updated successfully:", bookingWithProfiles);
 
     // If payment successful, send confirmation emails and create earnings record
-    if (paymentStatus === "paid" && booking) {
+    if (paymentStatus === "paid" && bookingWithProfiles) {
       console.log("Processing successful payment...");
       
       // Get user emails from auth
@@ -120,19 +136,15 @@ const handler = async (req: Request): Promise<Response> => {
         console.error("Error getting auth users:", authError);
       }
 
-      const studentUser = authUsers?.users?.find(user => user.id === booking.student_id);
-      const tutorUser = authUsers?.users?.find(user => user.id === booking.tutor_id);
+      const studentUser = authUsers?.users?.find(user => user.id === bookingWithProfiles.student_id);
+      const tutorUser = authUsers?.users?.find(user => user.id === bookingWithProfiles.tutor_id);
 
-      if (studentUser && tutorUser && booking.student && booking.tutor) {
+      if (studentUser && tutorUser && student && tutor) {
         // Send confirmation emails with complete booking data including names
         try {
           await supabaseClient.functions.invoke('send-booking-confirmation', {
             body: {
-              booking: {
-                ...booking,
-                student: booking.student,
-                tutor: booking.tutor
-              },
+              booking: bookingWithProfiles,
               studentEmail: studentUser.email,
               tutorEmail: tutorUser.email,
               paymentData
@@ -147,8 +159,8 @@ const handler = async (req: Request): Promise<Response> => {
         console.log("Missing user data for emails:", {
           studentUser: !!studentUser,
           tutorUser: !!tutorUser,
-          studentProfile: !!booking.student,
-          tutorProfile: !!booking.tutor
+          studentProfile: !!student,
+          tutorProfile: !!tutor
         });
       }
 
@@ -211,7 +223,7 @@ const handler = async (req: Request): Promise<Response> => {
         status: paymentStatus === "paid" ? "success" : "failed",
         payment_status: paymentStatus,
         transaction_data: paymentData,
-        booking: booking,
+        booking: bookingWithProfiles,
       }),
       {
         status: 200,
